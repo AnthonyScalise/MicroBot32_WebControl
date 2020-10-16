@@ -1,0 +1,46 @@
+/jsonReference/SS_jsonDataMessageFormat_Example.json
+/jsonReference/CS_jsonDataMessageFormat_Example.json
+/src/driverStation/wifiSecrets.h
+/include
+/lib
+/test
+/platformio.ini
+.DS_Store
+
+#platformio
+*.pio
+*.vscode
+
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app

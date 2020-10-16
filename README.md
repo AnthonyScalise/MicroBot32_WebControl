@@ -10,7 +10,7 @@ A modular UI that can be hosted localy on an ESP32 based robot to interface with
 * Customizable button widgets
 * Display widgets for both numbers and text
 
-![UI_Example image](/images/UI_Example.png)
+![UI_Example image](/images/UI_Example.PNG)
 
 ## Installation
 1. First, you need to install the ESP32 boards and the ESP32 file system manager in the Arduino IDE. See [here](https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/) for instructions on installing the board in the Arduino IDE, and see [here](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/) for instructions on how to install the file system uploader in the Arduino IDE.

@@ -1,4 +1,4 @@
-<img style="display: block; margin: 1em auto;" src="https://scontent.fmia1-2.fna.fbcdn.net/v/t31.0-8/1537996_643339182393245_311708371_o.jpg?_nc_cat=111&_nc_sid=dd9801&_nc_ohc=UOODvqq0MX4AX_t4t31&_nc_ht=scontent.fmia1-2.fna&oh=3ad350539cb8503f455ead9bff3d8a8d&oe=5F91DB74" width="300"></img>
+<img style="display: block; margin: 1em auto;" src="/images/DMLogo.png" width="300"></img>
 
 # Microbot32_WebControl
 A modular UI that can be hosted localy on an ESP32 based robot to interface with the robot through a browser. Developed by Team 3932: Dirty Mechanics members.

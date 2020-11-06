@@ -1,5 +1,5 @@
 /*
-    JoystickJavaScriptTest.ino
+    driverStation.ino
     Created by: Anthony Scalise
 
     This program takes advantage of the wifi functionality of the ESP32.
@@ -65,8 +65,7 @@ int lastGpButtons[16];
 int lastGpAxes[4];
 int lastVButtons[6];
 double lastVInputs[6];
-
-long counter;
+bool wasNotEnabled = true;
 
 void setup() {
   Serial.begin(115200);
@@ -78,26 +77,36 @@ void setup() {
   DriverStation.setDashDisplay(3, "Nort");
   DriverStation.setDashDisplay(4, 3.14159);
   DriverStation.setDashDisplay(5, 2.71828);
+  DriverStation.sendToConsole(0, "Example of an int:");
+  DriverStation.sendToConsole(0, 123456789);
+  DriverStation.sendToConsole(0, "\n Example of a double:");
+  DriverStation.sendToConsole(0, 3.14159);
+  DriverStation.sendToConsole(0, "\nABCDEFGHIJKLMNOPQRSTUVWXYZ\n");
 }
 
 void loop() {
   // Temporary Test //
   if(DriverStation.enabled()) {
+    if(wasNotEnabled) { 
+      DriverStation.sendToConsole(0, ("____________________________________\nDriver Station Has Been Enabled\n____________________________________\n\n")); 
+      wasNotEnabled = false;
+    }
     for(int i=0; i < 16; i++) {
       if(DriverStation.gamePadButton(i) && (!(lastGpButtons[i]==1))) {
         lastGpButtons[i] = 1; 
-        DriverStation.sendToConsole(0, ("Game Pad Button "+String(i+1)+" Pressed\n"));
+        DriverStation.sendToConsole(0, ("GamePad Button "+String(i+1)+": Pressed\n"));
         Serial.println("Game Pad Button "+String(i+1)+" Pressed");
       }
       if((!DriverStation.gamePadButton(i)) && (!(lastGpButtons[i]==0))) {
         lastGpButtons[i] = 0;
-        DriverStation.sendToConsole(0, ("Game Pad Button "+String(i+1)+" Released\n"));
+        DriverStation.sendToConsole(0, ("GamePad Button "+String(i+1)+": Released\n"));
         Serial.println("Game Pad Button "+String(i+1)+" Released");
       }
     }
     for(int i=0; i < 4; i++) {
       if(abs(DriverStation.gamePadAxes(i)) > 5) {
         if(lastGpAxes[i] != DriverStation.gamePadAxes(i)) {
+          DriverStation.sendToConsole(0, (String((i==0 || i==1)? "LeftJoystick " : "RightJoystick ") + String((i==0 || i==2)? "X Axis: " : "Y Axis: ") + String(DriverStation.gamePadAxes(i)))+"\n");
           Serial.println(String((i==0 || i==1)? "Left Joystick " : "Right Joystick ") + String((i==0 || i==2)? "X Axis: " : "Y Axis: ") + String(DriverStation.gamePadAxes(i)));
           lastGpAxes[i] = DriverStation.gamePadAxes(i);
         }
@@ -106,21 +115,23 @@ void loop() {
     for(int i=0; i < 6; i++) {
       if(DriverStation.dashButton(i) && (!(lastVButtons[i]==1))) {
         lastVButtons[i] = 1;
-        DriverStation.sendToConsole(0, ("Virtual Button "+String(i+1)+" Pressed\n"));
+        DriverStation.sendToConsole(0, ("VirtualButton "+String(i+1)+": Pressed\n"));
         Serial.println("Virtual Button "+String(i+1)+" Pressed");
       }
       if((!DriverStation.dashButton(i)) && (!(lastVButtons[i]==0))) {
         lastVButtons[i] = 0;
-        DriverStation.sendToConsole(0, ("Virtual Button "+String(i+1)+" Released\n"));
+        DriverStation.sendToConsole(0, ("VirtualButton "+String(i+1)+": Released\n"));
         Serial.println("Virtual Button "+String(i+1)+" Released");
       }
     }
     for(int i=0; i < 6; i++) {
       if(DriverStation.dashInput(i) != lastVInputs[i]) {
-        DriverStation.sendToConsole(0, ("Virtual Input "+String(i+1)+": "+String(DriverStation.dashInput(i), 5)+"\n"));
+        DriverStation.sendToConsole(0, ("VirtualInput "+String(i+1)+": "+String(DriverStation.dashInput(i), 5)+"\n"));
         Serial.println("Virtual Input "+String(i+1)+": "+String(DriverStation.dashInput(i), 5));
         lastVInputs[i] = DriverStation.dashInput(i);
       }
     }
+  } else {
+    wasNotEnabled = true;
   }
 }

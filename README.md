@@ -28,8 +28,8 @@ A modular UI that can be hosted localy on an ESP32 based robot to interface with
 ### Class Functions
 ```C++ 
 //DriverStationDashboard class that creates a driver station with the specified widgets
-DriverStationDashboard::DriverStationDashboard(int btnCount, int inpCount, int dispCount,
-    DashButton *dashButtons, DashInput *dashInputs, DashDisplay *dashDisplays)
+DriverStationDashboard::DriverStationDashboard(int btnCount, int inpCount, int dispCount, int consCount,
+    DashButton *dashButtons, DashInput *dashInputs, DashDisplay *dashDisplays, DashConsole *dashConsoles)
 
 //Initialize the driver station webpage on your local network
 void DriverStationDashboard::initialize(char *ssid, char *password)
@@ -52,14 +52,20 @@ int DriverStationDashboard::gamePadAxes(int axesNum)
 //Update a specified dash board display widget with text
 void DriverStationDashboard::setDashDisplay(int dispNum, char *dataToDisplay)
 
-//Update a specified dash board display widget with a number
+//Update a specified dash board display widget with a double
 void DriverStationDashboard::setDashDisplay(int dispNum, double dataToDisplay)
+
+//Update a specified dash board display widget with an int
+void DriverStationDashboard::setDashDisplay(int dispNum, int dataToDisplay)
 
 //Send data to a dash board console with a string
 void DriverStationDashboard::sendToConsole(int consNum, String dataToDisplay)
 
-//Send data to a dash board console with a number
+//Send data to a dash board console with a double
 void DriverStationDashboard::sendToConsole(int consNum, double dataToDisplay)
+
+//Send data to a dash board console with an int
+void DriverStationDashboard::sendToConsole(int consNum, int dataToDisplay)
 ```
 
 ## Contributing

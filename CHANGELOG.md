@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.2.0 - 2020-11-06
+### Added
+* Ability to set persistant size of all widgets
+* Ability to print ints to displays
+* Ability to print ints to consoles
+
+### Fixed
+* Bugs with console buffers
+* Bugs with display names
+
+### Changed
+* Total rewrite of client side widget construction
+* Total rewrite of server side console buffer
+* Moved gamepad widget creation from HTML to JS to allow for multiple controler support in the future 
+* Test script modified to test all features now that bugs are fixed
+
 ## 2.1.5 - 2020-10-14
 ### Added
 * Ability to download console log as a `.txt` file

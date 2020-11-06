@@ -32,10 +32,13 @@
 static AsyncWebServer _server(80);           //Creates an asyncronomous webserver on port 80
 static AsyncWebSocket _ws("/");              //Creates an asyncronomous web socket at subdomain "/"
 static DriverStationDashboard *dashInstance; //Create a static pointer to dash instance for access from ws class
+
+//Function used to do a software reset
+//void(*resetFunc)(void)=0;
+
 //Function to interact with the incoming websocket data
 static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
-
   //////////////////////////////////////////////////////////////////////////// On connected
   if (type == WS_EVT_CONNECT)
   { //If the websocket is connected
@@ -89,6 +92,7 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
   { //If the websocket is not connected
     logPL("-----------------------\n  Client disconnected\n-----------------------");
     dashInstance->setDashIsEnabled(false); //Set flag disabled
+    // resetFunc();
   }
   ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -126,44 +130,56 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
       {
         dashInstance->setDashInputs(inp, IncomingJsonBuffer["vInps"][inp]);
       } //Get dash input values
-      // logPL("Recived json data");
     }
     //////////////////////////////////
     ////    Send response data    ////
     DynamicJsonDocument OutgoingJsonBuffer(1000);                               //Dynamicly created json document to hold response
     JsonArray VirtualDisplays = OutgoingJsonBuffer.createNestedArray("vDisps"); //Create json array to hold dash display data
     JsonArray VirtualConsoles = OutgoingJsonBuffer.createNestedArray("vCons");  //Crate json array to hold dash console data
-    for (int disp = 0; disp < dashInstance->getDispCount(); disp++)
+    for(int disp=0; disp < dashInstance->getDispCount(); disp++) 
     {
       VirtualDisplays.add(dashInstance->getDashDisplays(disp).dispData);
     } //Add dash display data
     for (int cons = 0; cons < dashInstance->getConsCount(); cons++)
-    {
-      int startIndex = dashInstance->getDashConsoles(cons).bufferStart;
-      int endIndex = dashInstance->getDashConsoles(cons).bufferEnd;
-      if (startIndex != endIndex)
+    { 
+      if(dashInstance->getDashIsEnabled()) 
       {
-        int deltaBuff = ((startIndex < endIndex) ? (endIndex - startIndex) : ((999 - startIndex) + endIndex));
-        deltaBuff = (((deltaBuff / 50) >= 1) ? 50 : deltaBuff + 1);
-        char dataToSend[deltaBuff + 1];
-        char escape = '\0';
-        dataToSend[deltaBuff] = escape;
-        for (int i = 0; i < deltaBuff; i++)
+        int msgLength;
+        int buffEnd = dashInstance->getDashConsoles(cons).bufferEnd;
+        int buffStart = dashInstance->getDashConsoles(cons).bufferStart;
+        if(buffEnd > buffStart) 
         {
-          dataToSend[i] = dashInstance->getDashConsoles(cons).consBuffer[((startIndex + i) % 1000)];
+          msgLength = buffEnd - buffStart;
+        } 
+        else if(buffEnd < buffStart) 
+        {
+          msgLength = (buffEnd + (1000-buffStart));
+        } 
+        else 
+        { 
+          msgLength = 0;
         }
-        dashInstance->setConsoleBufferStart(cons, ((startIndex + (deltaBuff - 1)) % 1000));
-        VirtualConsoles.add(dataToSend); //Add dash console data
-      }
-      else
-      {
-        dashInstance->setConsoleContentsEmpty(cons);
+        if(msgLength > 0) 
+        {
+          char consoleMsg[msgLength+1];
+          for(int i=0; i<msgLength; i++) 
+          {        
+            consoleMsg[i] = dashInstance->getDashConsoles(cons).consBuffer[dashInstance->getDashConsoles(cons).bufferStart];
+            int next = dashInstance->getDashConsoles(cons).bufferStart + 1;
+            if(next >= 1000) 
+            { 
+              next = 0; 
+            }
+            dashInstance->setConsoleBufferStart(cons, next);
+          }
+          consoleMsg[msgLength] = '\0';
+          VirtualConsoles.add(consoleMsg);
+        }
       }
     }
     String responseDataString;                             //String to hold the constrcted message
     serializeJson(OutgoingJsonBuffer, responseDataString); //Serailze the json and put it in the created string
     client->text(responseDataString);                      //Send the serialized json from the string back to client over websocket
-    // logPL("Sent json data");
     //////////////////////////////////
   }
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +201,7 @@ DriverStationDashboard::DriverStationDashboard(int btnCount, int inpCount, int d
 
 void DriverStationDashboard::initialize(char *ssid, char *password)
 {
-  //Print title
+  //Print ASCII art title
   logPL("\n\n\n___  ___ _                   ______         _    _____  _____\n|  \\/  |(_)                  | ___ \\       | |  |____ |/ __  \\");
   logPL("| .  . | _   ___  _ __  ___  | |_/ /  ___  | |_     / /`' / /'\n| |\\/| || | / __|| '__|/ _ \\ | ___ \\ / _ \\ | __|    \\ \\  / /");
   logPL("| |  | || || (__ | |  | (_) || |_/ /| (_) || |_ .___/ /./ /___\n\\_|  |_/|_| \\___||_|   \\___/ \\____/  \\___/  \\__|\\____/ \\_____/");
@@ -254,7 +270,7 @@ void DriverStationDashboard::initialize(char *ssid, char *password)
 
   //Begin hosting web server
   _server.begin(); //Start the server schedule handler
-  logPL("Web Server Started.");
+  logPL("Web Server Started!");
 }
 
 //Get enabled state of dashboard
@@ -276,7 +292,7 @@ int DriverStationDashboard::gamePadAxes(int axesNum) { return _dashGamePad.gpAxe
 void DriverStationDashboard::setDashDisplay(int dispNum, String dataToDisplay)
 {
   int msgLength = (dataToDisplay.length());
-  char msgArray[msgLength];
+  char msgArray[msgLength+1];
   dataToDisplay.toCharArray(msgArray, (msgLength + 1));
   for (int i = 0; i < msgLength; i++)
   {
@@ -286,6 +302,7 @@ void DriverStationDashboard::setDashDisplay(int dispNum, String dataToDisplay)
   {
     _dashDisplays[dispNum].dispData[i] = ' ';
   }
+  msgArray[msgLength] = '\0';
 }
 
 //Set the data on a dash board display
@@ -297,70 +314,54 @@ void DriverStationDashboard::setDashDisplay(int dispNum, double dataToDisplay)
   setDashDisplay(dispNum, dataArray);
 }
 
+//Set the data on a dash board display
+void DriverStationDashboard::setDashDisplay(int dispNum, int dataToDisplay)
+{
+  int sizeOfData = sizeof(_dashDisplays[dispNum].dispData);
+  char dataArray[sizeOfData];
+  (String(dataToDisplay)).toCharArray(dataArray, sizeOfData);
+  setDashDisplay(dispNum, dataArray);
+}
+
 //Send data to a dash board console
 void DriverStationDashboard::sendToConsole(int consNum, String dataToDisplay)
 {
-  int msgLength = (dataToDisplay.length());
-  char msgArray[msgLength];
-  dataToDisplay.toCharArray(msgArray, (msgLength + 1));
-  int startIndex = _dashConsoles[consNum].bufferEnd;
-  int overlapIndex = _dashConsoles[consNum].bufferStart;
-  if ((startIndex > overlapIndex) || (!_dashConsoles[consNum].hasContents))
+  int msgLength = (dataToDisplay.length()+1);
+  char msgArray[msgLength+1];
+  dataToDisplay.toCharArray(msgArray, msgLength);
+  for(int i=0; i < msgLength; i++)
   {
-    if ((startIndex + (msgLength - 1)) < 1000)
+    int next = _dashConsoles[consNum].bufferEnd + 1;
+    if(next >= 1000) 
     {
-      for (int i = 0; i < msgLength; i++)
-      {
-        _dashConsoles[consNum].consBuffer[startIndex + i] = msgArray[i];
-      }
-      _dashConsoles[consNum].bufferEnd = (startIndex + (msgLength - 1));
+       next = 0;
     }
-    else
+    if(next == _dashConsoles[consNum].bufferStart) 
     {
-      int ovLap = ((startIndex + (msgLength - 1)) % 1000);
-      int leftBeforeOVL = (msgLength - (ovLap + 1));
-      for (int i = 0; i < leftBeforeOVL; i++)
+      logPL("ERROR: Console "+String(consNum)+" buffer overflow detected in sendToConsole function at buffer index "+String(_dashConsoles[consNum].bufferEnd)+":\n"); 
+      for(int ind=0; ind<1000; ind++)
       {
-        _dashConsoles[consNum].consBuffer[startIndex + i] = msgArray[i];
-      }
-      if (ovLap >= overlapIndex)
-      {
-        int maxIndexAllowed = ((ovLap - (ovLap - overlapIndex)) - 1);
-        for (int i = 0; i <= maxIndexAllowed; i++)
+        if(_dashConsoles[consNum].consBuffer[ind] != '\n')
         {
-          _dashConsoles[consNum].consBuffer[i] = msgArray[leftBeforeOVL + i];
+          logP(_dashConsoles[consNum].consBuffer[ind]);
         }
-        _dashConsoles[consNum].bufferEnd = (overlapIndex - 1);
-      }
-      else
-      {
-        for (int i = 0; i < ovLap; i++)
+        else
         {
-          _dashConsoles[consNum].consBuffer[i] = msgArray[leftBeforeOVL + i];
+          logP(" NEW_LINE ");
         }
-        _dashConsoles[consNum].bufferEnd = (ovLap);
       }
+    } 
+    else 
+    {
+      _dashConsoles[consNum].consBuffer[_dashConsoles[consNum].bufferEnd] = msgArray[i];
+      _dashConsoles[consNum].bufferEnd = next;
     }
-    _dashConsoles[consNum].hasContents = true;
   }
-  else if (startIndex < overlapIndex)
+  for(int i=0; i<1000; i++) 
   {
-    if ((startIndex + (msgLength - 1)) < overlapIndex)
-    {
-      for (int i = 0; i < msgLength; i++)
-      {
-        _dashConsoles[consNum].consBuffer[startIndex + i] = msgArray[i];
-      }
-      _dashConsoles[consNum].bufferEnd = (startIndex + (msgLength - 1));
-    }
-    else
-    {
-      int maxIndexAllowed = (((startIndex + (msgLength - 1)) - ((startIndex + (msgLength - 1)) - overlapIndex)) - 1);
-      for (int i = 0; i <= maxIndexAllowed; i++)
-      {
-        _dashConsoles[consNum].consBuffer[startIndex + i] = msgArray[i];
-      }
-      _dashConsoles[consNum].bufferEnd = (startIndex + maxIndexAllowed);
+    if(_dashConsoles[consNum].consBuffer[i] == '\0' && ((i <= _dashConsoles[consNum].bufferEnd) && (i >= _dashConsoles[consNum].bufferStart))) 
+    { 
+      _dashConsoles[consNum].consBuffer[i] = ' ';
     }
   }
 }
@@ -369,7 +370,15 @@ void DriverStationDashboard::sendToConsole(int consNum, String dataToDisplay)
 void DriverStationDashboard::sendToConsole(int consNum, double dataToDisplay)
 {
   char dataArray[20];
-  (String(dataToDisplay, 2)).toCharArray(dataArray, 20);
+  (String(dataToDisplay, 5)).toCharArray(dataArray, 20);
+  sendToConsole(consNum, dataArray);
+}
+
+//Set the data on a dash board display
+void DriverStationDashboard::sendToConsole(int consNum, int dataToDisplay)
+{
+  char dataArray[20];
+  String(dataToDisplay).toCharArray(dataArray, 20);
   sendToConsole(consNum, dataArray);
 }
 
@@ -387,6 +396,9 @@ int DriverStationDashboard::getConsCount(void) { return _consCount; }
 
 //Function for ws class to modify instance enabled state
 void DriverStationDashboard::setDashIsEnabled(bool dashState) { _dashIsEnabled = dashState; }
+
+//Function for ws class to access instance dashIsEnabled
+bool DriverStationDashboard::getDashIsEnabled() { return _dashIsEnabled; }
 
 //Function for ws class to access instance dash buttons
 DashButton DriverStationDashboard::getDashButtons(int btnNum) { return _dashButtons[btnNum]; }
@@ -414,6 +426,3 @@ void DriverStationDashboard::setDashGamePadAxes(int axesNum, int axesState) { _d
 
 //Fucntion for ws class to modify instance console buffer start position
 void DriverStationDashboard::setConsoleBufferStart(int consNum, int startIndex) { _dashConsoles[consNum].bufferStart = startIndex; }
-
-//Fucntion for ws class to modify instance console buffer has contents state
-void DriverStationDashboard::setConsoleContentsEmpty(int consNum) { _dashConsoles[consNum].hasContents = false; }

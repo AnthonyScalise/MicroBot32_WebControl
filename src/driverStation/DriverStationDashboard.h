@@ -52,7 +52,6 @@ struct DashConsole
   char consBuffer[1000];
   int bufferStart;
   int bufferEnd;
-  bool hasContents;
 };
 
 class DriverStationDashboard
@@ -69,14 +68,17 @@ public:
   int gamePadAxes(int axesNum);
   void setDashDisplay(int dispNum, String dataToDisplay);
   void setDashDisplay(int dispNum, double dataToDisplay);
+  void setDashDisplay(int dispNum, int dataToDisplay);
   void sendToConsole(int consNum, String dataToDisplay);
   void sendToConsole(int consNum, double dataToDisplay);
+  void sendToConsole(int consNum, int dataToDisplay);
 
   int getBtnCount(void);
   int getInpCount(void);
   int getDispCount(void);
   int getConsCount(void);
   void setDashIsEnabled(bool dashState);
+  bool getDashIsEnabled(void);
   DashButton getDashButtons(int btnNum);
   DashInput getDashInputs(int inpNum);
   DashDisplay getDashDisplays(int dispNum);
@@ -86,7 +88,6 @@ public:
   void setDashGamePadButtons(int btnNum, bool btnState);
   void setDashGamePadAxes(int axesNum, int axesState);
   void setConsoleBufferStart(int consNum, int startIndex);
-  void setConsoleContentsEmpty(int consNum);
 
 private:
   int _btnCount;

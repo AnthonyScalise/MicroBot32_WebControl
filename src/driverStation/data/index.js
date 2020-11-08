@@ -153,6 +153,14 @@ function initializeDashboard() {
         widgetElements["consoleWidgets"][i]["content"].appendChild(widgetElements["consoleWidgets"][i]["textarea"]);
         let buttonSpace = document.createElement("div");
         buttonSpace.style.setProperty("text-align", "right");
+        let consoleClearBtn = document.createElement("BUTTON");
+        consoleClearBtn.appendChild(document.createTextNode("Clear"));
+        consoleClearBtn.className = "btn btn-secondary btn-sm";
+        consoleClearBtn.style.setProperty("padding", "0px 5px");
+        consoleClearBtn.style.setProperty("margin", "0px 5px 0px 0px");
+        let clearLogData = function(index) { return function() { dashboardData["vCons"][index]["consMsg"] = ""; }}(i);
+        consoleClearBtn.addEventListener("click", clearLogData);
+        buttonSpace.appendChild(consoleClearBtn);
         let consoleSaveBtn = document.createElement("BUTTON");
         consoleSaveBtn.appendChild(document.createTextNode("Download"));
         consoleSaveBtn.className = "btn btn-secondary btn-sm";
@@ -317,8 +325,12 @@ function initializeDashboard() {
             }
         }
     } else {
+        let placmentMatrix = {};
+        let avgWidth = 0;
+        let heights = {"buttonWidgets": 140, "inputWidgets": 248, "displayWidgets": 346, "consoleWidgets": 440, "gamepadWidgets": 754.7};
         for(let widgetType in widgetElements) {
             if(widgetType != "countList") {
+                placmentMatrix[widgetType] = [];
                 for(let widgetNum in widgetElements[widgetType]) {
                     if(widgetType != "consoleWidgets" && widgetType != "gamepadWidgets") {
                         makeWidgetResizable(widgetType, widgetNum, "x");
@@ -328,7 +340,26 @@ function initializeDashboard() {
                         makeWidgetResizable(widgetType, widgetNum, "both");
                     }
                     makeWidgetDraggable(widgetType, widgetNum);
+                    avgWidth = (avgWidth + widgetElements[widgetType][widgetNum]["widget"].getBoundingClientRect().width);
+                    placmentMatrix[widgetType][widgetNum] = {};
+                }      
+                avgWidth = (avgWidth / widgetElements[widgetType].length);
+                for(let widgetNum in widgetElements[widgetType]) {
+                    placmentMatrix[widgetType][widgetNum]["x"] = ((avgWidth + 10) * widgetNum);
+                    placmentMatrix[widgetType][widgetNum]["y"] = heights[widgetType];
                 }
+                avgWidth = 0;
+            }
+        }
+        for(let widgetType in widgetElements) {
+            if(widgetType != "countList" && widgetType != "gamepadWidgets") {
+                for(let widgetNum in widgetElements[widgetType]) {
+                    widgetElements[widgetType][widgetNum]["widget"].style.setProperty("left", (placmentMatrix[widgetType][widgetNum]["x"]+"px"));
+                    widgetElements[widgetType][widgetNum]["widget"].style.setProperty("top", (placmentMatrix[widgetType][widgetNum]["y"]+"px"));
+                }
+            } else if(widgetType == "gamepadWidgets") {
+                widgetElements[widgetType][0]["widget"].style.setProperty("left", (window.screen.width - 156.2813 + "px"));
+                widgetElements[widgetType][0]["widget"].style.setProperty("top", (window.screen.height - 587 +"px"));
             }
         }
     }

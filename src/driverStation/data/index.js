@@ -7,6 +7,8 @@ var ws = null;
 var connectedToWebSocket = false;
 var dashIsInitialized = false;
 var hasGP = false;
+var leftPower, rightPower;
+var settingConfiguration;
 
 
 //Variable to hold dashboard widget runtime data
@@ -32,11 +34,17 @@ function initializeDashboard() {
     var widgetBoardSpace = document.getElementById("widgetBoard");
     var previousConfigurationSave = {}; //Variable to hold the state of wether a previous widget position configuration exists
     var previousConfigurationExists = false;
-    if (typeof(Storage) !== "undefined") {
-        if (localStorage.saveConfig) {
+    if(typeof(Storage) !== "undefined") {
+        if(localStorage.saveConfig) {
             previousConfigurationExists = true;
             $("#posLock").toggleClass("unlocked");
             previousConfigurationSave = JSON.parse(localStorage.getItem("saveConfig"));
+        }
+        if(localStorage.settingsConfig) {
+            settingConfiguration = JSON.parse(localStorage.getItem("settingsConfig"));
+        } else {
+            settingConfiguration = {"controlMode": "gpSelection", "invertedYAxis": false};
+            localStorage.setItem("settingsConfig", JSON.stringify(settingConfigurationSave));
         }
     }
 
@@ -72,43 +80,174 @@ function initializeDashboard() {
         }
     } 
 
-    //Add events to deal with gamepads
-    widgetElements["gamepadWidgets"][0]["widget"].style.setProperty("min-height", "100px");
-    dashboardData["gp"] = [];
-    dashboardData["gp"] = { "btns": [], "axes": [] };
-    for (var i = 0; i < 16; i++) {dashboardData["gp"]["btns"][i] = 0;}
-    for (var i = 0; i < 4; i++) {dashboardData["gp"]["axes"][i] = 0;}
-    widgetElements["gamepadWidgets"][0]["widget"].style.display = "none";
-    widgetElements["gamepadWidgets"][0]["header"].appendChild(document.createTextNode(""));
-    widgetElements["gamepadWidgets"][0]["header"].style.setProperty("padding", "5px 10px");
-    widgetElements["gamepadWidgets"][0]["content"].style.setProperty("text-align", "left");
-    if (canGame()) {
-        //This is the function run when the controller is connected
-        $(window).on("gamepadconnected", function() {
-            hasGP = true;
-            widgetElements["gamepadWidgets"][0]["header"].innerText = navigator.getGamepads()[0].id.replace(/ \([\s\S]*?\)/g, '');
-            widgetElements["gamepadWidgets"][0]["widget"].style.display = "block";
-            if($(".lock")[0].className == "lock unlocked") {
-                makeWidgetResizable("gamepadWidgets", 0, "y");
-                makeWidgetDraggable("gamepadWidgets", 0);
-            }
-            repGP = window.setInterval(handleGamepads, 50); //Set interval for websocket data return rate
-        });
+    //Gamepad
+    if(settingConfiguration["controlMode"] == "gpSelection") {
+        widgetElements["gamepadWidgets"][0]["widget"].style.setProperty("min-height", "100px");
+        dashboardData["gp"] = [];
+        dashboardData["gp"] = { "btns": [], "axes": [] };
+        for (var i = 0; i < 16; i++) {dashboardData["gp"]["btns"][i] = 0;}
+        for (var i = 0; i < 4; i++) {dashboardData["gp"]["axes"][i] = 0;}
+        widgetElements["gamepadWidgets"][0]["widget"].style.display = "none";
+        widgetElements["gamepadWidgets"][0]["header"].appendChild(document.createTextNode(""));
+        widgetElements["gamepadWidgets"][0]["header"].style.setProperty("padding", "5px 10px");
+        widgetElements["gamepadWidgets"][0]["content"].style.setProperty("text-align", "left");
+        if (canGame()) {
+            //This is the function run when the controller is connected
+            $(window).on("gamepadconnected", function() {
+                hasGP = true;
+                widgetElements["gamepadWidgets"][0]["header"].innerText = navigator.getGamepads()[0].id.replace(/ \([\s\S]*?\)/g, '');
+                widgetElements["gamepadWidgets"][0]["widget"].style.display = "block";
+                if($(".lock")[0].className == "lock unlocked") {
+                    makeWidgetResizable("gamepadWidgets", 0, "y");
+                    makeWidgetDraggable("gamepadWidgets", 0);
+                }
+                repGP = window.setInterval(handleGamepads, 50); //Set interval for websocket data return rate
+            });
+            //This is the function run when the controller is disconnected
+            $(window).on("gamepaddisconnected", function() {
+                hasGP = false;
+                widgetElements["gamepadWidgets"][0]["widget"].style.display = "none";
+                window.clearInterval(repGP); //Stop trying to update gamepad data
+            });
+            //setup interval for gamepad controller
+            var checkGP = window.setInterval(function() {
+                if (navigator.getGamepads()[0]) {
+                    if (!hasGP) $(window).trigger("gamepadconnected");
+                    window.clearInterval(checkGP);
+                }
+            }, 500);
+        }
+    } else {
+        widgetElements["gamepadWidgets"][0]["header"].innerHTML = "Keyboard Input";
+        widgetElements["gamepadWidgets"][0]["header"].style.setProperty("padding", "5px 10px");
+        widgetElements["gamepadWidgets"][0]["widget"].style.height = "144px"; 
+        widgetElements["gamepadWidgets"][0]["widget"].style.width = "173.89px";
+        dashboardData["gp"] = [];
+        dashboardData["gp"] = { "btns": [], "axes": [] };
 
-        //This is the function run when the controller is disconnected
-        $(window).on("gamepaddisconnected", function() {
-            hasGP = false;
-            widgetElements["gamepadWidgets"][0]["widget"].style.display = "none";
-            window.clearInterval(repGP); //Stop trying to update gamepad data
-        });
+        for (var i = 0; i < 16; i++) { dashboardData["gp"]["btns"][i] = 0; }
+        for (var i = 0; i < 4; i++) { dashboardData["gp"]["axes"][i] = 0; }
 
-        //setup interval for gamepad controller
-        var checkGP = window.setInterval(function() {
-            if (navigator.getGamepads()[0]) {
-                if (!hasGP) $(window).trigger("gamepadconnected");
-                window.clearInterval(checkGP);
+        let topButtonRow = document.createElement("div");
+        let bottomButtonsRow = document.createElement("div");
+        let buttonList = [];
+
+        function setJoyFromKey() {
+            let num = arguments[0];
+            switch(num) {
+                case("0"):
+                    dashboardData["gp"]["axes"][1] = ((!settingConfiguration["invertedYAxis"])? -100:100);
+                    dashboardData["gp"]["axes"][3] = ((!settingConfiguration["invertedYAxis"])?-100:100);
+                    break;
+                case("1"):
+                    dashboardData["gp"]["axes"][1] = ((!settingConfiguration["invertedYAxis"])? 100:-100);
+                    dashboardData["gp"]["axes"][3] = ((!settingConfiguration["invertedYAxis"])? -100:100);
+                    break;
+                case("2"):
+                    dashboardData["gp"]["axes"][1] = ((!settingConfiguration["invertedYAxis"])? 100:-100); 
+                    dashboardData["gp"]["axes"][3] = ((!settingConfiguration["invertedYAxis"])? 100:-100);
+                    break;
+                case("3"):
+                    dashboardData["gp"]["axes"][1] = ((!settingConfiguration["invertedYAxis"])? -100:100);
+                    dashboardData["gp"]["axes"][3] = ((!settingConfiguration["invertedYAxis"])? 100:-100);
+                    break;
             }
-        }, 500);
+        }
+
+        function resetJoyFromKey() {
+            dashboardData["gp"]["axes"][1] = 0;
+            dashboardData["gp"]["axes"][3] = 0;
+        }
+
+        for(let i=0; i<4; i++) { buttonList[i] = document.createElement("BUTTON"); }
+        topButtonRow.className = "d-flex justify-content-center";
+        topButtonRow.style = "margin: 0px 0px 10px 0px";
+        bottomButtonsRow.classname = "d-flex justify-content-left";
+
+        for(let num in buttonList) { 
+            let whileBeingClicked;
+            let movedOffWhileHeld = function() {
+                buttonList[num].className = "btn btn-secondary";
+                buttonList[num].style.setProperty("outline", "none");
+                clearInterval(whileBeingClicked);
+                resetJoyFromKey();
+                buttonList[num].removeEventListener("mouseout", movedOffWhileHeld);
+            };
+
+            buttonList[num].className = "btn btn-secondary";
+            buttonList[num].style.setProperty("box-shadow", "none");
+            buttonList[num].onmouseup = function() { this.blur(); };
+            buttonList[num].addEventListener("mousedown", function() {
+                whileBeingClicked = setInterval(function() {
+                    setJoyFromKey(num);
+                }, 20);
+                buttonList[num].className = "btn btn-secondary active";
+                buttonList[num].addEventListener("mouseout", movedOffWhileHeld);
+            });
+
+            buttonList[num].addEventListener("mouseup", function() {
+                buttonList[num].className = "btn btn-secondary";
+                buttonList[num].removeEventListener("mouseout", movedOffWhileHeld);
+                clearInterval(whileBeingClicked);
+                resetJoyFromKey();
+            }); 
+        }
+
+        topButtonRow.appendChild(buttonList[0]);
+        for(let i=1; i<4; i++) {
+            buttonList[i].style.setProperty("margin", "0px 5px 0px 5px");
+            bottomButtonsRow.appendChild(buttonList[i]);
+        }
+
+        widgetElements["gamepadWidgets"][0]["content"].appendChild(topButtonRow);
+        widgetElements["gamepadWidgets"][0]["content"].appendChild(bottomButtonsRow);
+        let keyCodes = [];
+        let lables = [];
+
+        if(settingConfiguration["controlMode"] == "wasdSelection") {
+            lables = ["W", "A", "S", "D"];
+            for(let num in buttonList) { buttonList[num].style.setProperty("width", "41.3px"); }
+            keyCodes = [87, 65, 83, 68];
+        } else if(settingConfiguration["controlMode"] == "arrowsSelection") {
+            lables = ["⮝", "⮜", "⮟", "⮞"];
+            for(let num in buttonList) { buttonList[num].style.removeProperty("width"); }
+            keyCodes = [38, 37, 40, 39];
+        }
+
+        for(let num in buttonList) { buttonList[num].innerHTML = lables[num]; }
+
+        var checkForPress = function(e) {
+            for(let num in buttonList) {
+                if(e.keyCode == keyCodes[num]) {
+                    buttonList[num].className = "btn btn-secondary active";
+                    setJoyFromKey(num);
+                }
+            }
+        };
+
+        var checkForRelease = function(e) {
+            for(let num in buttonList) {
+                if(e.keyCode == keyCodes[num]) {
+                    buttonList[num].className = "btn btn-secondary";
+                }
+            }
+            resetJoyFromKey();
+        };
+
+        let cursorIsInside = false;
+        widgetElements["gamepadWidgets"][0]["widget"].addEventListener("mouseover", function() { cursorIsInside = true });
+        widgetElements["gamepadWidgets"][0]["widget"].addEventListener("mouseout", function() { cursorIsInside = false });
+
+        document.addEventListener('click', function() {
+            if(cursorIsInside) {
+                document.addEventListener("keydown", checkForPress);
+                document.addEventListener("keyup", checkForRelease);
+            } else {
+                document.removeEventListener("keydown", checkForPress);
+                document.removeEventListener("keyup", checkForRelease);
+                resetJoyFromKey();
+            }
+        });
     }
 
     //Virtual Inputs
@@ -177,30 +316,45 @@ function initializeDashboard() {
         widgetElements["buttonWidgets"][i]["widget"].style.setProperty("min-width", "98px");
         widgetElements["buttonWidgets"][i]["widget"].style.setProperty("min-height", "56px");
         widgetElements["buttonWidgets"][i]["button"] = document.createElement("BUTTON");
+        widgetElements["buttonWidgets"][i]["button"].style.setProperty("box-shadow", "none");
+        widgetElements["buttonWidgets"][i]["button"].onmouseup = function() { this.blur(); };
         if ((dashboardData["vBtns"][i]["Params"][1]) == 1) {
             widgetElements["buttonWidgets"][i]["button"].appendChild(document.createTextNode(dashboardData["vBtns"][i]["Params"][2]));
-            widgetElements["buttonWidgets"][i]["button"].className = "btn btn-secondary";
+            widgetElements["buttonWidgets"][i]["button"].className = "btn btn-secondary active";
         } else {
             widgetElements["buttonWidgets"][i]["button"].appendChild(document.createTextNode(dashboardData["vBtns"][i]["Params"][3]));
-            widgetElements["buttonWidgets"][i]["button"].className = "btn btn-secondary disabled";
+            widgetElements["buttonWidgets"][i]["button"].className = "btn btn-secondary";
         }
-        let handleVirtualButtons = function(index) {
-            return function() {
-                if (dashboardData["vBtns"][index]["Params"][1] == 1) {
-                    dashboardData["vBtns"][index]["Params"][1] = 0;
-                    widgetElements["buttonWidgets"][i]["button"].className = "btn btn-secondary disabled";
-                    widgetElements["buttonWidgets"][i]["button"].innerText = dashboardData["vBtns"][index]["Params"][3];
-                } else {
-                    dashboardData["vBtns"][index]["Params"][1] = 1;
-                    widgetElements["buttonWidgets"][i]["button"].className = "btn btn-secondary";
-                    widgetElements["buttonWidgets"][i]["button"].innerText = dashboardData["vBtns"][index]["Params"][2];
-                }
+        
+        let handleVirtualButtons = function() {
+            if (dashboardData["vBtns"][i]["Params"][1] == 1) {
+                dashboardData["vBtns"][i]["Params"][1] = 0;
+                widgetElements["buttonWidgets"][i]["button"].innerText = dashboardData["vBtns"][i]["Params"][3];
+            } else {
+                dashboardData["vBtns"][i]["Params"][1] = 1;
+                widgetElements["buttonWidgets"][i]["button"].innerText = dashboardData["vBtns"][i]["Params"][2];
             }
-        }(i);
+            widgetElements["buttonWidgets"][i]["button"].classList.toggle("active");
+        };
+        
+        let handleLetGo = function() { 
+            handleVirtualButtons();
+            widgetElements["buttonWidgets"][i]["button"].removeEventListener("mouseout", handleLetGo);
+            widgetElements["buttonWidgets"][i]["button"].removeEventListener("mouseup", handleLetGo);
+        };
+
+        let handleVirtualButtonsMomentary = function() {
+            handleVirtualButtons();
+            widgetElements["buttonWidgets"][i]["button"].addEventListener("mouseout", handleLetGo);
+            widgetElements["buttonWidgets"][i]["button"].addEventListener("mouseup", handleLetGo);
+        };
+
         if (dashboardData["vBtns"][i]["Params"][0] == 1) {
-            widgetElements["buttonWidgets"][i]["button"].addEventListener("mouseup", handleVirtualButtons);
-            widgetElements["buttonWidgets"][i]["button"].addEventListener("mousedown", handleVirtualButtons);
-        } else {widgetElements["buttonWidgets"][i]["button"].addEventListener("click", handleVirtualButtons);}
+            widgetElements["buttonWidgets"][i]["button"].addEventListener("mousedown", handleVirtualButtonsMomentary);
+        } else { 
+            widgetElements["buttonWidgets"][i]["button"].addEventListener("click", handleVirtualButtons);
+        }
+
         widgetElements["buttonWidgets"][i]["button"].style.setProperty("float", "center")
         widgetElements["buttonWidgets"][i]["content"].appendChild(widgetElements["buttonWidgets"][i]["button"]);
     }
@@ -219,7 +373,7 @@ function initializeDashboard() {
                 for(let widgetType in widgetElements) {
                     if(widgetType != "countList") {
                         for(let widgetNum in widgetElements[widgetType]) {
-                            if(widgetType != "gamepadWidgets" || hasGP == true) {
+                            if(widgetType != "gamepadWidgets" || (hasGP == true && settingConfiguration["controlMode"] == "gpSelection")) {
                                 widgetElements[widgetType][widgetNum]["widget"].style.borderRadius = "0px";
                                 //Type dependent settings
                                 if(widgetType != "consoleWidgets" && widgetType != "gamepadWidgets") {
@@ -229,6 +383,9 @@ function initializeDashboard() {
                                 } else if(widgetType == "consoleWidgets") {
                                     makeWidgetResizable(widgetType, widgetNum, "both");
                                 }
+                                makeWidgetDraggable(widgetType, widgetNum);
+                            } else if(widgetType == "gamepadWidgets" && (settingConfiguration["controlMode"] == "wasdSelection" || settingConfiguration["controlMode"] == "arrowsSelection")) {
+                                makeWidgetResizable(widgetType, widgetNum, "neither");
                                 makeWidgetDraggable(widgetType, widgetNum);
                             }
                         } 
@@ -248,7 +405,7 @@ function initializeDashboard() {
                 for(let widgetType in widgetElements) {
                     if(widgetType != "countList") {
                         for(let widgetNum in widgetElements[widgetType]) {
-                            if(widgetType != "gamepadWidgets" || hasGP == true) {
+                            if(widgetType != "gamepadWidgets" || (hasGP == true && settingConfiguration["controlMode"] == "gpSelection")) {
                                 widgetElements[widgetType][widgetNum]["widget"].style.borderRadius = "8px";
                                 stopDragging(widgetType, widgetNum);
                                 stopResizing(widgetType, widgetNum);
@@ -278,6 +435,11 @@ function initializeDashboard() {
                                         }
                                         break;
                                 }
+                            } else if(widgetType == "gamepadWidgets" && (settingConfiguration["controlMode"] == "wasdSelection" || settingConfiguration["controlMode"] == "arrowsSelection")) {
+                                stopDragging(widgetType, widgetNum);
+                                stopResizing(widgetType, widgetNum);
+                                let positionBox = widgetElements[widgetType][widgetNum]["widget"].getBoundingClientRect();
+                                saveConfig[widgetType][widgetNum]["position"] = {"x": ((positionBox.left)+"px"), "y": ((positionBox.top)+"px")};
                             }
                         }
                     }
@@ -309,7 +471,7 @@ function initializeDashboard() {
                             break;
 
                         case("gamepadWidgets"):
-                            widgetElements[widgetType][widgetNum]["content"].style.height = previousConfigurationSave[widgetType][widgetNum]["size"]["height"];
+                            if(settingConfiguration["controlMode"] == "gpSelection") { widgetElements[widgetType][widgetNum]["content"].style.height = previousConfigurationSave[widgetType][widgetNum]["size"]["height"]; }
                             break;
 
                         case("consoleWidgets"):
@@ -335,7 +497,11 @@ function initializeDashboard() {
                     if(widgetType != "consoleWidgets" && widgetType != "gamepadWidgets") {
                         makeWidgetResizable(widgetType, widgetNum, "x");
                     } else if(widgetType == "gamepadWidgets") {
-                        makeWidgetResizable(widgetType, widgetNum, "y");
+                        if(settingConfiguration["controlMode"] == "gpSelection") {
+                            makeWidgetResizable(widgetType, widgetNum, "y");
+                        } else { 
+                            makeWidgetResizable(widgetType, widgetNum, "neither");
+                        }
                     } else if(widgetType == "consoleWidgets") {
                         makeWidgetResizable(widgetType, widgetNum, "both");
                     }
@@ -357,8 +523,11 @@ function initializeDashboard() {
                     widgetElements[widgetType][widgetNum]["widget"].style.setProperty("left", (placmentMatrix[widgetType][widgetNum]["x"]+"px"));
                     widgetElements[widgetType][widgetNum]["widget"].style.setProperty("top", (placmentMatrix[widgetType][widgetNum]["y"]+"px"));
                 }
-            } else if(widgetType == "gamepadWidgets") {
+            } else if(widgetType == "gamepadWidgets" && (settingConfiguration["controlMode"] == "gpSelection")) {
                 widgetElements[widgetType][0]["widget"].style.setProperty("left", (window.screen.width - 156.2813 + "px"));
+                widgetElements[widgetType][0]["widget"].style.setProperty("top", (window.screen.height - 587 +"px"));
+            } else if(widgetType == "gamepadWidgets" && (settingConfiguration["controlMode"] != "gpSelection")) {
+                widgetElements[widgetType][0]["widget"].style.setProperty("left", (window.screen.width - 173.89 + "px"));
                 widgetElements[widgetType][0]["widget"].style.setProperty("top", (window.screen.height - 587 +"px"));
             }
         }
@@ -392,10 +561,14 @@ function makeWidgetResizable(widgetType, widgetNum, axis) {
             break;
 
         case("gamepadWidgets"):
-            var gpWindow = widgetElements[widgetType][widgetNum]["content"];
-            widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "10px 10px");
-            gpWindow.style.height = (parseFloat(gpWindow.style.height.replace("px", ""))-10+"px")
-            widgetElements[widgetType][widgetNum]["header"].style.setProperty("padding", "5px 5px");
+            if(hasGP == true && settingConfiguration["controlMode"] == "gpSelection") {
+                var gpWindow = widgetElements[widgetType][widgetNum]["content"];
+                widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "10px 10px");
+                gpWindow.style.height = (parseFloat(gpWindow.style.height.replace("px", ""))-10+"px")
+                widgetElements[widgetType][widgetNum]["header"].style.setProperty("padding", "5px 5px");
+            } else {
+                widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "10px 5px 10px 5px");
+            }    
             break;
 
         case("buttonWidgets"):
@@ -506,10 +679,15 @@ function stopResizing(widgetType, widgetNum) {
             break;
 
         case("gamepadWidgets"):
-            let gpWindow = widgetElements[widgetType][widgetNum]["content"];
-            widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "15px 10px");
-            gpWindow.style.height = (parseFloat(gpWindow.style.height.replace("px", ""))+10+"px")
-            widgetElements[widgetType][widgetNum]["header"].style.setProperty("padding", "5px 10px");
+            if(hasGP == true && settingConfiguration["controlMode"] == "gpSelection") {
+                let gpWindow = widgetElements[widgetType][widgetNum]["content"];
+                widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "15px 10px");
+                gpWindow.style.height = (parseFloat(gpWindow.style.height.replace("px", ""))+10+"px")
+                widgetElements[widgetType][widgetNum]["header"].style.setProperty("padding", "5px 10px");
+            } else {
+                widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "5px 5px 10px 5px");
+                widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "15px 10px");
+            }
             break;
 
         case("consoleWidgets"):
@@ -530,31 +708,31 @@ function makeWidgetDraggable(widgetType, widgetNum) {
     head.style.setProperty("cursor", "move");
     head.onmousedown = dragMouseDown;
     function dragMouseDown(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // get the mouse cursor position at startup:
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      document.onmouseup = closeDragElement;
-      // call a function whenever the cursor moves:
-      document.onmousemove = elementDrag;
+        e = e || window.event;
+        e.preventDefault();
+        // get the mouse cursor position at startup:
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // call a function whenever the cursor moves:
+        document.onmousemove = elementDrag;
     }
     function elementDrag(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // calculate the new cursor position:
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      // set the element's new position:
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        e = e || window.event;
+        e.preventDefault();
+        // calculate the new cursor position:
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // set the element's new position:
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
     }
     function closeDragElement() {
-      /* stop moving when mouse button is released:*/
-      document.onmouseup = null;
-      document.onmousemove = null;
+        /* stop moving when mouse button is released:*/
+        document.onmouseup = null;
+        document.onmousemove = null;
     }
 }
 function stopDragging(widgetType, widgetNum) {
@@ -598,15 +776,16 @@ function handleGamepads() {
     let gp = navigator.getGamepads()[0]; //Get gamepad data
     let inputData = "";
     for (let i = 0; i < gp.buttons.length; i++) {
-        dashboardData.gp.btns[i] = ((gp.buttons[i].pressed) ? (1) : (0));
+        dashboardData["gp"]["btns"][i] = ((gp.buttons[i].pressed) ? (1) : (0));
         inputData += "Button " + (i + 1) + ": ";
         if (gp.buttons[i].pressed) { inputData += " pressed"; }
         inputData += "<br/>";
     }
     for (let i = 0; i < gp.axes.length; i += 2) {
-        dashboardData.gp.axes[i] = Math.round(((gp.axes[i]).toFixed(2)) * 100);
-        dashboardData.gp.axes[i+1] = Math.round(((gp.axes[i+1]).toFixed(2)) * 100);
-        inputData += "Stick " + (Math.ceil(i / 2) + 1) + ": " + dashboardData.gp.axes[i] + "," + dashboardData.gp.axes[i+1] + "<br/>";
+        dashboardData["gp"]["axes"][i] = Math.round(((gp.axes[i]).toFixed(2)) * 100);
+        dashboardData["gp"]["axes"][i+1] = Math.round(((gp.axes[i+1]).toFixed(2)) * 100);
+        if(settingConfiguration["invertedYAxis"]) { dashboardData["gp"]["axes"][i+1] = -(dashboardData["gp"]["axes"][i+1]); }
+        inputData += "Stick " + (Math.ceil(i / 2) + 1) + ": " + dashboardData["gp"]["axes"][i] + "," + dashboardData["gp"]["axes"][i+1] + "<br/>";
     }
     widgetElements["gamepadWidgets"][0]["content"].innerHTML = inputData;
 }
@@ -651,7 +830,9 @@ function openWebsocket() {
         window.clearInterval(repVirtualInputs); //Stop updating virtual inputs
         window.clearInterval(repVirtualDisplays); //Stop updating virtual displays
         window.clearInterval(repVirtualConsoles); //Stop updating virtual consoles
-        window.clearInterval(repGP); //Stop updating gamepad controller
+        if(typeof(repGP) !== "undefined") {
+            window.clearInterval(repGP); //Stop updating gamepad controller
+        }
         window.clearInterval(repSendData); //Stop the websocket processes
         location.reload();
         return false;
@@ -666,6 +847,13 @@ function openWebsocket() {
         }
     };
 }
+
+//Dont scroll with arrow keys
+window.addEventListener("keydown", function(e) { 
+    if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1){ 
+        e.preventDefault(); 
+    } 
+}, false); 
 
 //These functions are for dealing with the websocket and controler api
 function closeWebsocket() { ws.close(); }

@@ -4,6 +4,11 @@
     background-color: #375a7f;
 }
 
+.btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
 /* Widget Object */
 
 .widgetBlock {

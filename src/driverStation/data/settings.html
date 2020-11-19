@@ -32,12 +32,157 @@
                 <li class="nav-item">
                     <a class="nav-link" href="about.html">About</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item"> 
                   <a class="nav-link" href="devPage.html">DeveloperPage</a>
                 </li>
             </ul>
         </div>
     </nav>
+
+    <div class="d-flex justify-content-left">
+        <div class="card border-primary mb-3" style="max-width: 20rem; height: 150px; margin: 10px; display: inline-block;">
+            <div class="card-header">Widget Configuration Settings</div>
+            <div class="card-body">
+                <h6 class="card-title">Profile</h6>
+                <button type="button" style="margin: 0px 10px 0px 0px; box-shadow: none;" class="btn btn-primary btn-sm" onclick="configDownload()">Download</button>
+                <button type="file" style="margin: 0px 10px 0px 0px; box-shadow: none;" class="btn btn-primary btn-sm"  onclick="configUpload()">Upload</button>
+                <button type="button" style="box-shadow: none;" class="btn btn-primary btn-sm" onclick="resetConfig()">Reset</button>
+            </div>
+        </div>  
+        <div class="card border-primary mb-3" style="max-width: 20rem; margin: 10px; display: inline-block;">
+            <div class="card-header">Controller Input Settings</div>
+            <div class="card-body">
+                <div class="btn-group btn-group-toggle" style="display: inline-block" data-toggle="buttons">
+                    <h6 class="card-title" >Mode</h6>
+                    <label class="btn btn-primary" id="gpSelection" onclick="changeControlMode(this)" style="box-shadow: none;">
+                        <input type="radio" name="options" autocomplete="off" mousedown="this.className"> GamePad
+                    </label>
+                    <label class="btn btn-primary" id="wasdSelection" onchange="changeControlMode(this)" style="box-shadow: none;">
+                        <input type="radio" name="options" autocomplete="off"> WASD
+                    </label>
+                    <label class="btn btn-primary" id="arrowsSelection" onchange="changeControlMode(this)" style="box-shadow: none;">
+                        <input type="radio" name="options" autocomplete="off"> Arrow Keys
+                    </label>
+                </div>
+                <br><br>         
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="invertYSwitch" onchange="toggleInvertY(this)">
+                    <label class="custom-control-label" for="invertYSwitch">Invert Y Axis</label>
+                </div>
+            </div>
+        </div>  
+    </div>
+
+    <!-- The JS to handle settings interface -->
+    <script> 
+        //This function can download a text file give the creation parameters
+        function downloadToFile(content, filename, contentType) {
+            var a = document.createElement('a');
+            var file = new Blob([content], {type: contentType});
+            a.href = URL.createObjectURL(file);
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+        
+        //This function can upload a text file
+        function uploadText() {
+            return new Promise((resolve) => {
+                // create file input
+                let uploader = document.createElement('input');
+                uploader.type = 'file';
+                uploader.style.display = 'none';
+                // listen for files
+                uploader.addEventListener('change', () => {
+                    let files = uploader.files;
+                    if (files.length) {
+                        let reader = new FileReader();
+                        reader.addEventListener('load', () => {
+                            uploader.parentNode.removeChild(uploader);
+                            resolve(reader.result);
+                        });
+                        reader.readAsText(files[0]);
+                    }
+                })
+                // trigger input
+                document.body.appendChild(uploader);
+                uploader.click();
+            })
+        }
+
+        //The function to download the local storage file for widget position and size
+        function configDownload() {
+            console.log("DOWNLOAD DETECTED");
+            if (typeof(Storage) !== "undefined") {
+                if (localStorage.saveConfig) {
+                    let previousConfigurationSave = JSON.stringify(localStorage.getItem("saveConfig"));
+                    downloadToFile(previousConfigurationSave, 'widgetConfigSaveFile.txt', 'text/plain');
+                } else {
+                    alert("No widget configuration detected");
+                }
+            } else {
+                alert("Your browser does not support local storage");
+            }
+        }
+
+        //The function to upload a widget position and size config file to local storage
+        function configUpload() {
+            uploadText().then(config => {
+                if(JSON.parse(config) != "[object Object]") {
+                    localStorage.setItem("saveConfig", JSON.parse(config));
+                } else {
+                    localStorage.setItem("saveConfig", config);
+                }
+                alert("Configuration uploaded successfully");
+            });
+        }
+
+        //The function to reset the widget position config in local storage
+        function resetConfig() {
+            if(confirm("This will reset your current widget position configuration. Are you sure?")) {
+                localStorage.removeItem("saveConfig");
+                alert("Configuration successfully reset");
+            }
+        }
+
+        function changeControlMode(btn) {
+            if (typeof(Storage) !== "undefined") {
+                settingConfigurationSave["controlMode"] = btn.id;
+                localStorage.setItem("settingsConfig", JSON.stringify(settingConfigurationSave));
+            } else {
+                alert("Your browser does not support local storage");
+            }
+        }
+
+        function toggleInvertY(btn) {
+            if (typeof(Storage) !== "undefined") {
+                if(btn.checked) {
+                    settingConfigurationSave["invertedYAxis"] = true;
+                } else {
+                    settingConfigurationSave["invertedYAxis"] = false;
+                }
+                localStorage.setItem("settingsConfig", JSON.stringify(settingConfigurationSave));
+            } else {
+                alert("Your browser does not support local storage");
+            }
+        }
+
+        if (typeof(Storage) !== "undefined") {
+            if (localStorage.settingsConfig) {
+                var settingConfigurationSave = JSON.parse(localStorage.getItem("settingsConfig"));
+                document.getElementById(settingConfigurationSave["controlMode"]).classList.add("active");
+                if(settingConfigurationSave["invertedYAxis"] == true) {
+                    document.getElementById("invertYSwitch").checked = true;
+                }
+            } else {
+                var settingConfigurationSave = {"controlMode": "gpSelection", "invertedYAxis": "true"};
+                localStorage.setItem("settingsConfig", JSON.stringify(settingConfigurationSave));
+            }
+        } else {
+            alert("Your browser does not support local storage");
+        }
+    </script>
+
 
     <!-- Script links -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

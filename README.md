@@ -69,18 +69,18 @@ void DriverStationDashboard::sendToConsole(int consNum, int dataToDisplay)
 ```
 
 # UI Usage
-### Using the gamepad
+### Using the Gamepad
 ![Gamepad Usage Example Video](/images/gamepadUsageExample.gif)
 * When the dashboard is enabled the gamepad widget is hidden untill an input on a valid controler is detected.
 
-### Locking the widget configuration
+### Locking the Widget Configuration
 ![Configuration Saving Example Video](/images/configurationLockExample.gif)
 * When you use the dashboard for the first time the widgets will be placed in rows. You can resize the length of buttons displays and inputs, the height of the gamepad map, and the size of consoles using the resizers in the four corners of all widgets. 
 * You can move all widgets draging them by their top banner.
 * Using the lock in the top right will ensure every time you use the dashboard your widgets will stay the same.
 * You can unlock the configuration make modifications and lock them again at any time.
 
-### Clearing and downloading consoles
+### Clearing and Downloading Console Logs
 ![Console Buttons Example Video](/images/consoleButtonExample.gif)
 * You can use the download button to save the console logs as a `.txt` file
 * The clear button will clear the console field and its save file.

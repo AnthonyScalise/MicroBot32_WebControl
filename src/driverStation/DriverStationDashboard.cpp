@@ -302,7 +302,7 @@ void DriverStationDashboard::setDashDisplay(int dispNum, String dataToDisplay)
   {
     _dashDisplays[dispNum].dispData[i] = ' ';
   }
-  msgArray[msgLength] = '\0';
+  _dashDisplays[dispNum].dispData[msgLength] = '\0';
 }
 
 //Set the data on a dash board display

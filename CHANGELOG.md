@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+<br><br>
+
+## 2.2.3 - 2020-11-22
+### Fixed
+* A bug where dash display contents were not visible without a dash console
+
+### Added
+* Update to documentation
+* First example project
+
+### Changed
+* Made Change log a little more readable
+
+<br><br>
+
 ## 2.2.2 - 2020-11-19
 ### Added
 * Ability to emulate gamepad joystick with arrow keys and WASD keys
@@ -16,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Settings page now has actual settings in it
 
+<br><br>
+
 ## 2.2.1 - 2020-11-08
 ### Added
 * Auto widget spacing for startup without saved previous position configuration
@@ -23,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Compressed logo and favicon images to save on memory
+
+<br><br>
 
 ## 2.2.0 - 2020-11-06
 ### Added
@@ -40,9 +59,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Moved gamepad widget creation from HTML to JS to allow for multiple controler support in the future 
 * Test script modified to test all features now that bugs are fixed
 
+<br><br>
+
 ## 2.1.5 - 2020-10-14
 ### Added
 * Ability to download console log as a `.txt` file
+
+<br><br>
 
 ## 2.1.4 - 2020-10-13
 ### Changed
@@ -50,6 +73,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * WiFi would continously begin in an infinite loop
+
+<br><br>
 
 ## 2.1.3 - 2020-10-12
 ### Added
@@ -60,12 +85,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Problems not connecting to WiFi the first time
 * Error from converting string constant to char pointer
 
+<br><br>
+
 ## 2.1.2 - 2020-10-07
 ### Added
 * Persistant dashboard layout locking button
 
 ### Changed
 * Improved some awkward UI interactions
+
+<br><br>
 
 ## 2.1.1 - 2020-10-06
 ### Added
@@ -77,6 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Bug that caused connection to crash sometimes
 * Inability to disable and re-enable dashboard
 * Bug that casued widgets to duplicate when re-enabling
+
+<br><br>
 
 ## 2.1.0 - 2020-10-06
 ### Added
@@ -91,6 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * Turned gamepad display into a widget and made it draggable
 
+<br><br>
+
 ## 2.0.4 - 2020-10-04
 ### Added
 * `wifiSecrets.h` which is ignored by git to define wifi creds and avoid commits containing personal data
@@ -102,6 +135,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Bugs with json data transmission. 
 
+<br><br>
+
 ## 2.0.3 - 2020-09-23
 ### Added
 * WiFi access point mode
@@ -112,9 +147,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Issue with leaving personal wifi credentials in code
 
+<br><br>
+
 ## 2.0.2 - 2020-09-23
 ### Changed
 * Added C++ gitignore template to `.gitignore`
+
+<br><br>
 
 ## 2.0.1 - 2020-09-23
 ### Added
@@ -122,6 +161,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Major updates to `README.md` file
+
+<br><br>
 
 ## 2.0.0 - 2020-09-21
 ### Added
@@ -131,6 +172,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [ArduinoJson](https://github.com/bblanchon/ArduinoJson) version was updated to 6.16.1
 * Major rewrite of JSON communication structure
 * Major rewrite of driver station class structure
+
+<br><br>
 
 ## 1.1.2 - 2020-09-06
 ### Added
@@ -144,12 +187,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 * Updated reference to `ArduinoJson` library.
 
+<br><br>
+
 ## 1.1.1 - 2020-08-29
 ### Added
 * Client-side JSON data transmission
 
 ### Fixed
 * Updated reference to `ArduinoJson` library.
+
+<br><br>
 
 ## 1.1.0 - 2020-08-27
 ### Added
@@ -160,6 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Various spelling/grammar issues
+
+<br><br>
 
 ## 1.0.0 - 2020-08-25
 ### Added

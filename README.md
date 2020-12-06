@@ -15,7 +15,7 @@ An arduino library to generate a modular browser based UI that can be hosted on 
 
 ## Installation
 1. Install the ESP32 boards and the ESP32 file system manager in the Arduino IDE. See [here](https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/) for instructions on installing the board in the Arduino IDE, and see [here](https://randomnerdtutorials.com/install-esp32-filesystem-uploader-arduino-ide/) for instructions on how to install the file system uploader in the Arduino IDE.
-2. Install the library dependencies to your IDE: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) [AsyncTCP](https://github.com/me-no-dev/AsyncTCP) [https://github.com/bblanchon/ArduinoJson]
+2. Install the library dependencies to your IDE: [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer) [AsyncTCP](https://github.com/me-no-dev/AsyncTCP) [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
 3. Clone this repository.
 4. Open the `driverStation.ino` file in the Arduino IDE. This will allow your Arduino IDE to be positioned at the correct file location locally.
 5. Using the `wifiSecrets_EXAMPLE.h` file as refference Change the `ssid` and `password` to the name of your WiFi network so that the program can connect to your WiFi upon startup. Alternatively you can remove the line `#include "wifiSecrets.h"` and directly set your ssid and password in your ino sketch.

@@ -63,6 +63,7 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
     {                                                         //Iterate through the dash inputs list
       JsonObject Input = VirtualInputs.createNestedObject();  //Create input object in json virtual input array
       Input["Id"] = dashInstance->getDashInputs(inp).inpName; //Set input name
+      Input["val"] = dashInstance->getDashInputs(inp).inpData; //Set input initial value
     }
     //Pack json config for virtual displays
     JsonArray VirtualDisplays = JSONBufferOut.createNestedArray("vDisps");
@@ -233,16 +234,10 @@ void DriverStationDashboard::initialize(char *ssid, char *password)
   _server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html", "text/html"); });
   //If a HTTP_GET request is recived for "/settings.html" serve the settings.html page
   _server.on("/settings.html", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/settings.html", "text/html"); });
-  //If a HTTP_GET request is recived for "/about.html" serve the logo image
-  _server.on("/about.html", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/about.html", "text/html"); });
-  //If a HTTP_GET request is recived for "/devPage.html" serve the devPage.html page
-  _server.on("/devPage.html", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/devPage.html", "text/html"); });
   //If a HTTP_GET request is recived for "/styles.css" serve the style.css script
   _server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.css", "text/css"); });
   //If a HTTP_GET request is recived for "/index.js" serve javascript file
   _server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.js", "text/javascript"); });
-  //If a HTTP_GET request is recived for "/devPage.js" serve javascript file
-  _server.on("/devPage.js", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/devPage.js", "text/javascript"); });
   //If a HTTP_GET request is recived for "/logo.png" serve the logo png
   _server.on("/logo.png", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/logo.png", "image/png"); });
   //If a HTTP_GET request is recived for "/favicon.ico" serve the favicon icon

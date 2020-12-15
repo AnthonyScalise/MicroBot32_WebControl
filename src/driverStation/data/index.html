@@ -13,51 +13,39 @@
       integrity="sha384-nNK9n28pDUDDgIiIqZ/MiyO3F4/9vsMtReZK39klb/MtkZI3/LtjSjlmyVPS3KdN" crossorigin="anonymous">
 </head>
 
-<body>
+<body style="height: auto;">
   <!--- Main navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="#">
-      <img href="#" id="mainLogo" src="/logo.png" alt="Logo">
-    </a>
-    <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#collapsibleNavId"
-      aria-controls="collapsibleNavId" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="collapsibleNavId">
-      <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-        <li class="nav-item active">
+  <nav class="navbar navbar-dark bg-primary" style="padding: 5px;">
+    <div style="width: 20%">
+      <a href="#" class="navbar-brand">
+        <img href="#" id="mainLogo" src="/logo.png" alt="Logo">
+      </a>
+      <ul class="navbar-nav" style="display: inline-block">
+        <li class="nav-item active" style="display: inline-block; margin: 0px 5px 0px 0px">
           <a class="nav-link" href="index.html">Controller <span class="sr-only">(current)</span></a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" style="display: inline-block; margin: 0px 0px 0px 5px">
           <a class="nav-link" href="settings.html">Settings</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="about.html">About</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="devPage.html">DeveloperPage</a>
         </li>
       </ul>
     </div>
-    <span>
-      <div class="container">
-        <span class="lock unlocked" id="posLock"></span>
-      </div>
-    </span>    
+    <div style="text-align: center; margin: 0px auto;">
+      <div style="text-align: center; background-color: #303030; margin: 0px auto; padding: 10px 10px; border-radius: 0.5rem;">
+        <button class="btn btn-danger" style="margin: 0px 2.5px 0px 0px; width: 83.73px;" onclick="closeWebsocket()" disabled="true" id="disconnectButton">Disabled</button>
+        <button class="btn btn-outline-success" style="margin: 0px 0px 0px 2.5px; width: 79.14px;" onclick="openWebsocket()" id="connectButton">Enable</button>
+      </div>  
+    </div>
+    <div style="width: 20%;">
+      <span style="float: right;">
+        <div class="container">
+          <span class="lock unlocked" id="posLock"></span>
+        </div>
+      </span>
+    </div>    
   </nav>
 
-  <!-- Buttons and output -->
-  <div class="container mt-2 w-100">
-    <div class="row">
-      <div class="col-6 d-flex justify-content-center">
-        <button class="btn btn-outline-success" onclick="openWebsocket()" id="connectButton">Enable</button>
-      </div>
-      <div class="col-6 d-flex justify-content-center">
-        <button class="btn btn-danger" onclick="closeWebsocket()" disabled="true" id="disconnectButton">Disabled</button>
-      </div>
-    </div>
-  </div>
-  <div id="widgetBoard"></div>
+  <!-- WidgetBoard -->
+  <div id="widgetBoard" style="width: 100%; height: calc(100vh - 66px);"></div>
 
   <!-- Script links -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

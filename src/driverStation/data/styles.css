@@ -1,3 +1,11 @@
+html {
+    overflow: hidden;
+}
+
+body {
+    overflow: hidden;
+}
+
 .statusBar {
     text-align: center;
     border-radius: 8px;
@@ -10,42 +18,33 @@
 }
 
 /* Widget Object */
-
 .widgetBlock {
     position: absolute;
     background-color: #375a7f;
     color: white;
-    border-radius: 8px;
+    border: 1px solid rgb(95, 95, 95);
     display: inline-block;
     overflow: hidden;
-  }
-  
-  .widgetHeader {
+}
+ 
+.widgetHeader {
     padding: 5px 5px;
     display: block;
     background-color: #404040;
-    border-radius: 8px 8px 0px 0px;
+    border-radius: 0px;
     color: white;
     position: relative;
-  }
-  
-  .widgetContent {
-      display: block;
-      text-align: center;
-      color: white;
-      background-color: #375a7f;
-      border-radius: 0px 0px 8px 8px;
-      padding: 15px 10px;
-  }
-
-.devLog {
-    color: white;
-    width: 400px;
-    min-height: 400px;
-    padding: 20px 20px;
-    border-radius: 8px;
-    background-color: #375a7f;
 }
+
+.widgetContent {
+    display: block;
+    text-align: center;
+    color: white;
+    border-radius: 0px;
+    background-color: #375a7f;
+    padding: 15px 10px;
+}
+
 
 #mainLogo {
     width: 100px;
@@ -108,7 +107,7 @@
 }
 
 .container {
-    display: flex;
+    /* display: flex; */
     align-items: center;
     justify-content: center;
     min-height: 50px;

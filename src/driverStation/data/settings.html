@@ -13,43 +13,45 @@
 
 <body>
     <!--- Main navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-dark bg-primary" style="padding: 5px;">
         <a class="navbar-brand" href="#">
             <img href="#" id="mainLogo" src="/logo.png" alt="Logo">
         </a>
-        <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#collapsibleNavId"
-            aria-controls="collapsibleNavId" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="collapsibleNavId">
-            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="index.html">Controller</a>
-                </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="settings.html">Settings <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="about.html">About</a>
-                </li>
-                <li class="nav-item"> 
-                  <a class="nav-link" href="devPage.html">DeveloperPage</a>
-                </li>
-            </ul>
-        </div>
+        <ul class="navbar-nav mr-auto mt-2 mt-lg-0" style="display: inline-block">
+            <li class="nav-item" style="display: inline-block; margin: 0px 5px 0px 0px">
+                <a class="nav-link" href="index.html">Controller</a>
+            </li>
+            <li class="nav-item active" style="display: inline-block; margin: 0px 0px 0px 5px">
+                <a class="nav-link" href="settings.html">Settings <span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
     </nav>
 
-    <div class="d-flex justify-content-left">
-        <div class="card border-primary mb-3" style="max-width: 20rem; height: 150px; margin: 10px; display: inline-block;">
-            <div class="card-header">Widget Configuration Settings</div>
+    <div class="col-md-8 col-sm-12 justify-content-left">
+        <div class="card border-primary mb-3" style="max-width: 20rem; height: auto; margin: 10px 5px 0px 0px; display: inline-block;">
+            <div class="card-header">Widget Settings</div>
             <div class="card-body">
-                <h6 class="card-title">Profile</h6>
+                <h6 class="card-title">Configuration Profile</h6>
                 <button type="button" style="margin: 0px 10px 0px 0px; box-shadow: none;" class="btn btn-primary btn-sm" onclick="configDownload()">Download</button>
-                <button type="file" style="margin: 0px 10px 0px 0px; box-shadow: none;" class="btn btn-primary btn-sm"  onclick="configUpload()">Upload</button>
+                <button type="file" style="margin: 0px 10px 0px 0px; box-shadow: none;" class="btn btn-primary btn-sm" onclick="configUpload()">Upload</button>
                 <button type="button" style="box-shadow: none;" class="btn btn-primary btn-sm" onclick="resetConfig()">Reset</button>
+                <br>
+                <br>
+                <br>
+                <h6 class="card-title">Dragging</h6>
+                <div class="custom-control custom-switch" style="clear: right">
+                    <input type="checkbox" class="custom-control-input" id="widgetGridSwitch" onchange="toggleSetting(this, 'widgetGrid')">
+                    <label class="custom-control-label" for="widgetGridSwitch">Grid</label>
+                    <input class="unselectable" style="width: 40px; float: right; outline: none; border: none; color: white; background-color: transparent;" value="" id="gridSizeLabel" type="text" readonly="">
+                    <input type="range" class="custom-range" id="gridSizeSlider" style="width: 75px; float: right; margin: 0px 5px;" step="1.0" min="1" max="40" oninput="changeGridSize(this)" onchange="changeGridSize(this)">
+                </div>
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="widgetSnapSwitch" onchange="toggleSetting(this, 'widgetSnap')">
+                    <label class="custom-control-label" for="widgetSnapSwitch">Snap to Edges</label>
+                </div>
             </div>
-        </div>  
-        <div class="card border-primary mb-3" style="max-width: 20rem; margin: 10px; display: inline-block;">
+        </div>
+        <div class="card border-primary mb-3" style="max-width: 20rem; margin: 10px 0px 0px 5px; display: inline-block; vertical-align: top;">
             <div class="card-header">Controller Input Settings</div>
             <div class="card-body">
                 <div class="btn-group btn-group-toggle" style="display: inline-block" data-toggle="buttons">
@@ -66,12 +68,13 @@
                 </div>
                 <br><br>         
                 <div class="custom-control custom-switch">
-                    <input type="checkbox" class="custom-control-input" id="invertYSwitch" onchange="toggleInvertY(this)">
+                    <input type="checkbox" class="custom-control-input" id="invertYSwitch" onchange="toggleSetting(this, 'invertedYAxis')">
                     <label class="custom-control-label" for="invertYSwitch">Invert Y Axis</label>
                 </div>
             </div>
-        </div>  
+        </div> 
     </div>
+    <div style="margin: 0px 10px">v2.3.0</div>
 
     <!-- The JS to handle settings interface -->
     <script> 
@@ -154,12 +157,12 @@
             }
         }
 
-        function toggleInvertY(btn) {
+        function toggleSetting(btn, setting) {
             if (typeof(Storage) !== "undefined") {
                 if(btn.checked) {
-                    settingConfigurationSave["invertedYAxis"] = true;
+                    settingConfigurationSave[setting] = true;
                 } else {
-                    settingConfigurationSave["invertedYAxis"] = false;
+                    settingConfigurationSave[setting] = false;
                 }
                 localStorage.setItem("settingsConfig", JSON.stringify(settingConfigurationSave));
             } else {
@@ -167,15 +170,32 @@
             }
         }
 
+        function changeGridSize(slider) {
+            if (typeof(Storage) !== "undefined") {
+                settingConfigurationSave["gridSize"] = slider.value;
+                document.getElementById("gridSizeLabel").value = (slider.value + " px");
+                localStorage.setItem("settingsConfig", JSON.stringify(settingConfigurationSave));
+            } else {
+                alert("Your browser does not support local storage");
+            }
+        }
+
+        function initialization() {
+            document.getElementById(settingConfigurationSave["controlMode"]).classList.add("active");
+            document.getElementById("gridSizeSlider").setAttribute("value", settingConfigurationSave["gridSize"]);
+            document.getElementById("gridSizeLabel").setAttribute("value", (settingConfigurationSave["gridSize"] + " px"));
+            document.getElementById("invertYSwitch").checked = settingConfigurationSave["invertedYAxis"];
+            document.getElementById("widgetGridSwitch").checked = settingConfigurationSave["widgetGrid"];
+            document.getElementById("widgetSnapSwitch").checked = settingConfigurationSave["widgetSnap"];
+        }
+
         if (typeof(Storage) !== "undefined") {
             if (localStorage.settingsConfig) {
                 var settingConfigurationSave = JSON.parse(localStorage.getItem("settingsConfig"));
-                document.getElementById(settingConfigurationSave["controlMode"]).classList.add("active");
-                if(settingConfigurationSave["invertedYAxis"] == true) {
-                    document.getElementById("invertYSwitch").checked = true;
-                }
+                initialization();
             } else {
-                var settingConfigurationSave = {"controlMode": "gpSelection", "invertedYAxis": "true"};
+                var settingConfigurationSave = {"controlMode": "gpSelection", "invertedYAxis": false, "widgetGrid": false, "gridSize": 1, "widgetSnap": true};
+                initialization();
                 localStorage.setItem("settingsConfig", JSON.stringify(settingConfigurationSave));
             }
         } else {

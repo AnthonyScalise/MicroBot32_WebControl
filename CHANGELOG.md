@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 <br><br>
 
+## 2.3.0 - 2020-12-14
+### Fixed
+* Bugs with console widgets resizing beyond minimum limit
+* Bugs with button widgets resizing beyond minimum limit
+* Bugs with input widgets resizing beyond minimum limit
+* Bug where widgets shrink when locked
+* Bug where new users can not enable until visiting settings page
+* New widgets no longer glitch into navbar
+* Bugs caused by moving mouse before releasing buttons
+* Bug with arrow key ASCII character incompatibility on Mac OSX
+
+### Added
+* Ability to snap widgets to a grid of specified resolution
+* Ability for widgets to snap to each others edges
+* Settings UI for widget snaping
+* Boundaries to keep widgets on screen
+* Ability to set initial value for input widgets
+* Buttons now initially auto size to largest state display value
+* All widgets auto size to contents and keep minimum size limits after resizing
+* Ability to add additional widgets without glitching a saved position configuration
+
+### Removed
+* Developer page HTML
+* Developer page JS
+* About page HTML
+
+### Changed
+* Moved enable and disable buttons to navbar
+* Moved version number from `About` page to `Settings`
+* Removed rounded edges from widgets
+* Added grey border to sides of widgets
+* Standardized widget heights
+* Refactored code for dragging widgets
+* Refactored code for settings page
+* `driverStation.ino` test sketch to demonstrate new features
+* Widget config for calculator demo to work with changes
+
+<br><br>
+
 ## 2.2.3 - 2020-11-22
 ### Fixed
 * A bug where dash display contents were not visible without a dash console

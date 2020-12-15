@@ -57,13 +57,17 @@ An arduino library to generate a modular browser based UI that can be hosted on 
 
 # Settings
 ![Settings Page Image](/images/settingsPageImage.PNG)
-### Widget Configuration
+### Widget Settings
+##### Configuration
 * The widget configuration stores data for both position and size of widgets 
 * After creating a widget setup you can download your configuration to migrate to another computer or share with others
 * You can upload position configurations here 
 * You can also reset your widget position configuration to default here
+##### Dragging
+* Turning on `Grid` will snap widgets to a grid with the resolution specified by the slider from 1 to 40 pixels
+* Turning on `Snap To Edges` will cause widgets to snap to nearby widgets sides and corners  
 
-### Controller Input
+### Controller Input Settings
 * `GamePad` mode allows for reading controller buttons and joysticks to control your robot
 * `WASD` and `Arrow Key` modes emulate gamepad joystick axes #1 and #3 for left and right respectively as a tank drive configuration
 * By default WASD and Arrow Key joystick emulation uses a value of `-100` for joystick up and `100` for joystick down

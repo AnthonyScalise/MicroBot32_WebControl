@@ -225,6 +225,35 @@ void DriverStationDashboard::initialize(char *ssid, char *password)
   }
   logPL("\nConnected at: " + (WiFi.localIP()).toString()); //Print local IP address
 
+  //Handle mDNS initialization
+  if (!MDNS.begin("robot"))
+  {
+    logPL("!-Error setting up mDNS responder-!"); //Creates dns name in this case it is robot.
+  }
+  else
+  {
+    logPL("DNS server started.");
+  }
+
+  if (!SPIFFS.begin(true)) 
+  {
+    logPL("! There was an error mounting SPIFFS partition !");
+  } 
+  else 
+  {
+    File jsFile = SPIFFS.open("/index.js", FILE_APPEND);
+    if (!jsFile) 
+    {
+      logPL("! There was an error opening index.js !");
+    } 
+    else 
+    {
+      jsFile.seek(0);
+      jsFile.println("var ipAddress = \""+(WiFi.localIP()).toString()+"\"");
+      jsFile.close();
+    }
+  }
+
   //Handle server initialization
   _ws.onEvent(onWsEvent);   //Create event for websockets
   _server.addHandler(&_ws); //Put websocket event in the schedule handler for the server
@@ -242,26 +271,6 @@ void DriverStationDashboard::initialize(char *ssid, char *password)
   _server.on("/logo.png", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/logo.png", "image/png"); });
   //If a HTTP_GET request is recived for "/favicon.ico" serve the favicon icon
   _server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/favicon.png", "image/png"); });
-
-  //Handle mDNS initialization
-  if (!MDNS.begin("robot"))
-  {
-    logPL("!-Error setting up mDNS responder-!"); //Creates dns name in this case it is robot.
-  }
-  else
-  {
-    logPL("DNS server started.");
-  }
-
-  //Handle SPIFFS file system initialization
-  if (!SPIFFS.begin())
-  {
-    logPL("!-SPIFFS Mount failed-!");
-  }
-  else
-  {
-    logPL("SPIFFS Mount succesfull.");
-  }
 
   //Begin hosting web server
   _server.begin(); //Start the server schedule handler

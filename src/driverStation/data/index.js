@@ -901,7 +901,7 @@ function updateDashboard() {
 //The functions for the enable and disable buttons
 function openWebsocket() {
     //Starts websocket pointed at given domain. This domain must be changed to the local IP if mDNS is not being used.
-    ws = new WebSocket("ws://robot.local/");
+    ws = new WebSocket("ws://"+ipAddress+"/");
     //Funtion to be used when the enable button is pressed
     ws.onopen = function() {
         $("#connectButton").text("Enabled").removeClass("btn-outline-success").addClass("btn-success").prop('disabled', true);

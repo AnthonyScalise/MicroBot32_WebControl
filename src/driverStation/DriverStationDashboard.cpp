@@ -267,8 +267,6 @@ void DriverStationDashboard::initialize(char *ssid, char *password)
   _server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/styles.css", "text/css"); });
   //If a HTTP_GET request is recived for "/index.js" serve javascript file
   _server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.js", "text/javascript"); });
-  //If a HTTP_GET request is recived for "/logo.png" serve the logo png
-  _server.on("/logo.png", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/logo.png", "image/png"); });
   //If a HTTP_GET request is recived for "/favicon.ico" serve the favicon icon
   _server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) { request->send(SPIFFS, "/favicon.png", "image/png"); });
 

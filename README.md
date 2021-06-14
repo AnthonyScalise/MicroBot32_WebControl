@@ -21,7 +21,7 @@ An arduino library to generate a modular browser based UI that can be hosted on 
 5. Using the `wifiSecrets_EXAMPLE.h` file as refference Change the `ssid` and `password` to the name of your WiFi network so that the program can connect to your WiFi upon startup. Alternatively you can remove the line `#include "wifiSecrets.h"` and directly set your ssid and password in your ino sketch.
 6. Upload the `data` folder to the ESP32 filesystem. To do this, choose the `Tools > ESP32 Sketch Data Upload` option in the Arduino menu bar. Wait for this process to complete. You should see a message similar to `Leaving...` or `Hard reseting...` when the process is done.
 7. Upload the current file to the ESP32 through the Arduino IDE by using the `Upload` button (commonly styled as a right arrow) in the Arduino menu. Make sure the board is set to `ESP32 Dev Module` in your board settings. Again, you should see a message similar to `Leaving...` or `Hard reseting...` when the process is done.
-8. If you have mDNS bonjour installed on your computer (you might already) you can open `robot.local` in your browser. If this does not work when the program is finished uploading, open up your serial monitor. The robots assigned local IP will be printed. Open this IP in a web browser, and the GUI should be accessible.
+8. If you have bonjour or Avahi mDNS installed on your computer you can open `robot.local` in your browser. If the domain does not work on a windows device install [Bonjour Browser](https://hobbyistsoftware.com/Downloads/BonjourBrowser/BonjourBrowserSetup.exe). If this does not work, open up your serial monitor when the program is finished uploading. The robots assigned local IP will be printed. Enter this IP address into your web browser.
 
 <br><br>
 

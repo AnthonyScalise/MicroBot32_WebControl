@@ -19,6 +19,7 @@
     *NOTE you need to change the websocket domain in "test.js" if you are not using mDNS.
 */
 
+
 #include "DriverStationDashboard.h"
 #include "wifiSecrets.h"
 
@@ -55,7 +56,14 @@ DashDisplay DashDisplays[6] = {
 DashConsole DashConsoles[1] = {
   {"Test Console"}
 };
-DriverStationDashboard DriverStation(6, 6, 6, 1, DashButtons, DashInputs, DashDisplays, DashConsoles);
+//Dash graph parameters: (Name, X axis name, Y axis names)
+DashGraph DashGraphs[4] = {
+  {"X1 Graph", "X1 X Axis", "X1 Y Axis"},
+  {"Y1 Graph", "Y1 X Axis", "Y1 Y Axis"},
+  {"X2 Graph", "X2 X Axis", "X2 Y Axis"},
+  {"Y2 Graph", "Y2 X Axis", "Y2 Y Axis"}
+};
+DriverStationDashboard DriverStation(6, 6, 6, 1, 4, DashButtons, DashInputs, DashDisplays, DashConsoles, DashGraphs);
 ////////////////////////////////////////////
 
 char ssid[] = THIS_IS_WHERE_YOUR_SSID_GOES;  //Set the wifi SSID for your robot access point here
@@ -66,6 +74,7 @@ int lastGpAxes[4];
 int lastVButtons[6];
 double lastVInputs[6];
 bool wasNotEnabled = true;
+int inputCount[] = {0, 0, 0, 0};
 
 void setup() {
   Serial.begin(115200);
@@ -104,6 +113,8 @@ void loop() {
         if(lastGpAxes[i] != DriverStation.gamePadAxes(i)) {
           DriverStation.sendToConsole(0, (String((i==0 || i==1)? "LeftJoystick " : "RightJoystick ") + String((i==0 || i==2)? "X Axis: " : "Y Axis: ") + String(DriverStation.gamePadAxes(i)))+"\n");
           Serial.println(String((i==0 || i==1)? "Left Joystick " : "Right Joystick ") + String((i==0 || i==2)? "X Axis: " : "Y Axis: ") + String(DriverStation.gamePadAxes(i)));
+          DriverStation.sendToGraph(i, inputCount[i], DriverStation.gamePadAxes(i));
+          inputCount[i]++;
           lastGpAxes[i] = DriverStation.gamePadAxes(i);
         }
       }
@@ -129,5 +140,8 @@ void loop() {
     }
   } else {
     wasNotEnabled = true;
+    for(int i=0; i<4; i++) {
+      inputCount[i] = 0;
+    }
   }
 }

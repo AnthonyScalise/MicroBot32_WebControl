@@ -49,7 +49,18 @@ struct DashGamePad
 struct DashConsole
 {
   String consName;
-  char consBuffer[1000];
+  char consBuffer[500];
+  int bufferStart;
+  int bufferEnd;
+};
+
+struct DashGraph
+{
+  String grfName;
+  String xName;
+  String yName;
+  double grfBufferX[50];
+  double grfBufferY[50];
   int bufferStart;
   int bufferEnd;
 };
@@ -57,8 +68,8 @@ struct DashConsole
 class DriverStationDashboard
 {
 public:
-  DriverStationDashboard(int btnCount, int inpCount, int dispCount, int consCount,
-                         DashButton *dashButtons, DashInput *dashInputs, DashDisplay *dashDisplays, DashConsole *dashConsoles);
+  DriverStationDashboard(int btnCount, int inpCount, int dispCount, int consCount, int grfCount,
+                         DashButton *dashButtons, DashInput *dashInputs, DashDisplay *dashDisplays, DashConsole *dashConsoles, DashGraph *dashGraphs);
 
   void initialize(char *ssid, char *password);
   bool enabled(void);
@@ -72,28 +83,34 @@ public:
   void sendToConsole(int consNum, String dataToDisplay);
   void sendToConsole(int consNum, double dataToDisplay);
   void sendToConsole(int consNum, int dataToDisplay);
+  void sendToGraph(int grfNum, double xVal, double yVal); //int lineNum
+
 
   int getBtnCount(void);
   int getInpCount(void);
   int getDispCount(void);
   int getConsCount(void);
+  int getGrfCount(void);
   void setDashIsEnabled(bool dashState);
   bool getDashIsEnabled(void);
   DashButton getDashButtons(int btnNum);
   DashInput getDashInputs(int inpNum);
   DashDisplay getDashDisplays(int dispNum);
   DashConsole getDashConsoles(int consNum);
+  DashGraph getDashGraphs(int grfNum);
   void setDashButtons(int btnNum, bool btnState);
   void setDashInputs(int inpNum, double inpVal);
   void setDashGamePadButtons(int btnNum, bool btnState);
   void setDashGamePadAxes(int axesNum, int axesState);
   void setConsoleBufferStart(int consNum, int startIndex);
+  void setGraphBufferStart(int grfNum, int startIndex);
 
 private:
   int _btnCount;
   int _inpCount;
   int _dispCount;
   int _consCount;
+  int _grfCount;
   bool _dashIsEnabled = false;
 
   DashInput *_dashInputs;
@@ -101,6 +118,7 @@ private:
   DashButton *_dashButtons;
   DashDisplay *_dashDisplays;
   DashConsole *_dashConsoles;
+  DashGraph *_dashGraphs;
 };
 
 #endif

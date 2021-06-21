@@ -3,6 +3,7 @@ var repSendData;
 var repVirtualInputs;
 var repVirtualDisplays;
 var repVirtualConsoles;
+var repVirtualGraphs;
 var ws = null;
 var connectedToWebSocket = false;
 var dashIsInitialized = false;
@@ -16,13 +17,24 @@ var dashboardData = {};
 
 //Array to hold the dashboard widget elements
 var widgetElements = {
-    "countList": {"buttonWidgets": 0, "inputWidgets": 0, "displayWidgets": 0, "consoleWidgets": 0, "gamepadWidgets": 1}, 
+    "countList": {"buttonWidgets": 0, "inputWidgets": 0, "displayWidgets": 0, "consoleWidgets": 0, "graphWidgets": 0, "gamepadWidgets": 1}, 
     "consoleWidgets": [], 
     "buttonWidgets": [],  
     "inputWidgets": [], 
     "displayWidgets": [],
+    "graphWidgets": [],
     "gamepadWidgets": []
 };
+
+//The function to draw and redraw google graphs
+startDrawingChart = function(graphNum) {
+    google.load("visualization", "1", {packages:["corechart"],callback: function(){drawChart(graphNum)}});
+    function drawChart(num) {
+        widgetElements["graphWidgets"][num]["chart"] = new google.visualization.LineChart(widgetElements["graphWidgets"][num]["container"]);
+        dashboardData["vGrfs"][num]["dataTable"] = google.visualization.arrayToDataTable(dashboardData["vGrfs"][num]["dataArray"]);  
+        widgetElements["graphWidgets"][num]["chart"].draw(dashboardData["vGrfs"][num]["dataTable"], dashboardData["vGrfs"][num]["options"]);
+    }
+}
 
 //The function that initializes the driver dashboard
 function initializeDashboard() {
@@ -31,6 +43,7 @@ function initializeDashboard() {
     widgetElements["countList"]["inputWidgets"] = Object.keys(dashboardData["vInps"]).length;
     widgetElements["countList"]["displayWidgets"] = Object.keys(dashboardData["vDisps"]).length;
     widgetElements["countList"]["consoleWidgets"] = Object.keys(dashboardData["vCons"]).length;
+    widgetElements["countList"]["graphWidgets"] = Object.keys(dashboardData["vGrfs"]).length;
     var widgetBoardSpace = document.getElementById("widgetBoard");
     var previousConfigurationSave = {}; //Variable to hold the state of wether a previous widget position configuration exists
     var previousConfigurationExists = "none";
@@ -113,13 +126,13 @@ function initializeDashboard() {
         widgetElements["gamepadWidgets"][0]["widget"].style.setProperty("width", "158.28px");
         dashboardData["gp"] = [];
         dashboardData["gp"] = { "btns": [], "axes": [] };
-        for (var i = 0; i < 16; i++) {dashboardData["gp"]["btns"][i] = 0;}
-        for (var i = 0; i < 4; i++) {dashboardData["gp"]["axes"][i] = 0;}
+        for(var i = 0; i < 16; i++) {dashboardData["gp"]["btns"][i] = 0;}
+        for(var i = 0; i < 4; i++) {dashboardData["gp"]["axes"][i] = 0;}
         widgetElements["gamepadWidgets"][0]["widget"].style.display = "none";
         widgetElements["gamepadWidgets"][0]["header"].appendChild(document.createTextNode(""));
         widgetElements["gamepadWidgets"][0]["header"].style.setProperty("padding", "5px 10px");
         widgetElements["gamepadWidgets"][0]["content"].style.setProperty("text-align", "left");
-        if (canGame()) {
+        if(canGame()) {
             //This is the function run when the controller is connected
             $(window).on("gamepadconnected", function() {
                 hasGP = true;
@@ -142,8 +155,8 @@ function initializeDashboard() {
             });
             //setup interval for gamepad controller
             var checkGP = window.setInterval(function() {
-                if (navigator.getGamepads()[0]) {
-                    if (!hasGP) $(window).trigger("gamepadconnected");
+                if(navigator.getGamepads()[0]) {
+                    if(!hasGP) $(window).trigger("gamepadconnected");
                     window.clearInterval(checkGP);
                 }
             }, 500);
@@ -156,8 +169,8 @@ function initializeDashboard() {
         dashboardData["gp"] = [];
         dashboardData["gp"] = { "btns": [], "axes": [] };
 
-        for (var i = 0; i < 16; i++) { dashboardData["gp"]["btns"][i] = 0; }
-        for (var i = 0; i < 4; i++) { dashboardData["gp"]["axes"][i] = 0; }
+        for(var i = 0; i < 16; i++) { dashboardData["gp"]["btns"][i] = 0; }
+        for(var i = 0; i < 4; i++) { dashboardData["gp"]["axes"][i] = 0; }
 
         let topButtonRow = document.createElement("div");
         let bottomButtonsRow = document.createElement("div");
@@ -286,7 +299,7 @@ function initializeDashboard() {
     }
 
     //Virtual Inputs
-    for (let i = 0; i < widgetElements["countList"]["inputWidgets"]; i++) { 
+    for(let i = 0; i < widgetElements["countList"]["inputWidgets"]; i++) { 
         widgetElements["inputWidgets"][i]["widget"].style.setProperty("max-height", "100px");
         widgetElements["inputWidgets"][i]["widget"].style.setProperty("width", "auto");
         widgetElements["inputWidgets"][i]["header"].innerText = (dashboardData["vInps"][i]["Id"]);
@@ -303,7 +316,7 @@ function initializeDashboard() {
     }
 
     //Virtual Displays
-    for (let i = 0; i < widgetElements["countList"]["displayWidgets"]; i++) {
+    for(let i = 0; i < widgetElements["countList"]["displayWidgets"]; i++) {
         widgetElements["displayWidgets"][i]["widget"].style.setProperty("height", "100px");
         dashboardData["vDisps"][i]["dispMsg"] = "";
         widgetElements["displayWidgets"][i]["header"].appendChild(document.createTextNode(dashboardData["vDisps"][i]["Id"]));
@@ -312,7 +325,7 @@ function initializeDashboard() {
     }
 
     //Virtual Consoles
-    for (let i = 0; i < widgetElements["countList"]["consoleWidgets"]; i++) {
+    for(let i = 0; i < widgetElements["countList"]["consoleWidgets"]; i++) {
         widgetElements["consoleWidgets"][i]["widget"].style.setProperty("min-width", "187px");
         widgetElements["consoleWidgets"][i]["widget"].style.setProperty("min-height", "213px");
         widgetElements["consoleWidgets"][i]["content"].style.setProperty("padding", "15px 10px 7px");
@@ -352,7 +365,7 @@ function initializeDashboard() {
     }
 
     //Virtual Buttons
-    for (let i = 0; i < widgetElements["countList"]["buttonWidgets"]; i++) {
+    for(let i = 0; i < widgetElements["countList"]["buttonWidgets"]; i++) {
         widgetElements["buttonWidgets"][i]["header"].innerText = (dashboardData["vBtns"][i]["Id"]);
         widgetElements["buttonWidgets"][i]["header"].style.setProperty("width", "auto");
         widgetElements["buttonWidgets"][i]["widget"].style.setProperty("max-height", "100px");
@@ -360,7 +373,7 @@ function initializeDashboard() {
         widgetElements["buttonWidgets"][i]["button"].style.setProperty("box-shadow", "none");
         widgetElements["buttonWidgets"][i]["button"].onmouseup = function() { this.blur(); };
         widgetElements["buttonWidgets"][i]["button"].style.setProperty("max-height", "36px");
-        if ((dashboardData["vBtns"][i]["Params"][1]) == 1) {
+        if((dashboardData["vBtns"][i]["Params"][1]) == 1) {
             widgetElements["buttonWidgets"][i]["button"].appendChild(document.createTextNode(dashboardData["vBtns"][i]["Params"][2]));
             widgetElements["buttonWidgets"][i]["button"].className = "btn btn-secondary active";
         } else {
@@ -369,7 +382,7 @@ function initializeDashboard() {
         }
         
         let handleVirtualButtons = function() {
-            if (dashboardData["vBtns"][i]["Params"][1] == 1) {
+            if(dashboardData["vBtns"][i]["Params"][1] == 1) {
                 dashboardData["vBtns"][i]["Params"][1] = 0;
                 widgetElements["buttonWidgets"][i]["button"].innerText = dashboardData["vBtns"][i]["Params"][3];
             } else {
@@ -391,7 +404,7 @@ function initializeDashboard() {
             widgetElements["buttonWidgets"][i]["button"].addEventListener("mouseup", handleLetGo);
         };
 
-        if (dashboardData["vBtns"][i]["Params"][0] == 1) {
+        if(dashboardData["vBtns"][i]["Params"][0] == 1) {
             widgetElements["buttonWidgets"][i]["button"].addEventListener("mousedown", handleVirtualButtonsMomentary);
         } else { 
             widgetElements["buttonWidgets"][i]["button"].addEventListener("click", handleVirtualButtons);
@@ -400,16 +413,56 @@ function initializeDashboard() {
         widgetElements["buttonWidgets"][i]["content"].appendChild(widgetElements["buttonWidgets"][i]["button"]);
     }
 
+    //Virtual Graphs
+    for(let i = 0; i < widgetElements["countList"]["graphWidgets"]; i++) {
+        widgetElements["graphWidgets"][i]["widget"].style.setProperty("min-height", "199px");
+        widgetElements["graphWidgets"][i]["widget"].style.setProperty("min-width", "205px");
+        widgetElements["graphWidgets"][i]["header"].appendChild(document.createTextNode(dashboardData["vGrfs"][i]["Id"]));
+        widgetElements["graphWidgets"][i]["content"].style.setProperty("padding", "5px 5px");
+        widgetElements["graphWidgets"][i]["container"] = document.createElement("div");
+        widgetElements["graphWidgets"][i]["container"].style.display = "inline-block";
+        widgetElements["graphWidgets"][i]["container"].setAttribute("overflow", "auto");
+        widgetElements["graphWidgets"][i]["container"].style.setProperty("min-height", "145px");
+        widgetElements["graphWidgets"][i]["container"].style.setProperty("min-width", "180px");
+        widgetElements["graphWidgets"][i]["content"].appendChild(widgetElements["graphWidgets"][i]["container"]);
+        dashboardData["vGrfs"][i]["x"] = [];
+        dashboardData["vGrfs"][i]["y"] = [];
+        dashboardData["vGrfs"][i]["dataArray"] = [[dashboardData["vGrfs"][i]["xLbl"], dashboardData["vGrfs"][i]["yLbl"]], [0, 0]];
+        dashboardData["vGrfs"][i]["options"] = {
+            'width':'100%',
+            'series': {
+                0: {'targetAxisIndex': 0}
+            },
+            'hAxis': {
+                'title': dashboardData["vGrfs"][i]["xLbl"],
+                "gridlines": {"count": 10},
+                'textStyle': {'bold': true}
+            },
+            'vAxis': {
+                0: {
+                    'title': dashboardData["vGrfs"][i]["yLbl"],
+                    "gridlines": {"count": 10}
+                }
+            },
+            'chartArea': {'width': '98%'},
+            'legend': 'none',
+            'colors': ['#1759ff']
+        };
+        startDrawingChart(i);
+    }
+
+
     dashIsInitialized = true;
-    repVirtualInputs = window.setInterval(handleVirtualInputs, 50); //Set interval to update virtual inputs
-    repVirtualDisplays = window.setInterval(handleVirtualDisplays, 50); //Set interval to update virtual display
-    repVirtualConsoles = window.setInterval(handleVirtualConsoles, 50); //Set interval to update virtual console
-    repSendData = window.setInterval(sendData, 50); //Set interval for the json websocket transmission
+    repVirtualInputs = window.setInterval(handleVirtualInputs, 20); //Set interval to update virtual inputs
+    repVirtualDisplays = window.setInterval(handleVirtualDisplays, 20); //Set interval to update virtual displays
+    repVirtualConsoles = window.setInterval(handleVirtualConsoles, 10); //Set interval to update virtual consoles
+    repVirtualGraphs = window.setInterval(handleVirtualGraphs, 10); //Set interval to update virtual graphs
+    repSendData = window.setInterval(sendData, 10); //Set interval for the json websocket transmission
 
     $(".lock").click(function() {
-        if (typeof(Storage) !== "undefined") {
+        if(typeof(Storage) !== "undefined") {
             $(this).toggleClass("unlocked");
-            if (document.getElementById("posLock").className == "lock unlocked") {
+            if(document.getElementById("posLock").className == "lock unlocked") {
                 console.log("UNLOCKED");
                 for(let widgetType in widgetElements) {
                     if(widgetType != "countList") {
@@ -420,7 +473,7 @@ function initializeDashboard() {
                                     makeWidgetResizable(widgetType, widgetNum, "x");
                                 } else if(widgetType == "gamepadWidgets") {
                                     makeWidgetResizable(widgetType, widgetNum, "y");
-                                } else if(widgetType == "consoleWidgets") {
+                                } else if(widgetType == "consoleWidgets" || widgetType == "graphWidgets") {
                                     makeWidgetResizable(widgetType, widgetNum, "both");
                                 }
                                 $(widgetElements[widgetType][widgetNum]["widget"]).draggable("enable");
@@ -437,7 +490,7 @@ function initializeDashboard() {
                 if(previousConfigurationExists == "found") {
                     saveConfig = previousConfigurationSave;
                 } else if(previousConfigurationExists == "none") {
-                    saveConfig = {"gamepadWidgets": [], "inputWidgets": [], "buttonWidgets": [], "displayWidgets": [], "consoleWidgets": []};
+                    saveConfig = {"gamepadWidgets": [], "inputWidgets": [], "buttonWidgets": [], "displayWidgets": [], "consoleWidgets": [], "graphWidgets": []};
                     for(let type in saveConfig) {
                         for(let num in widgetElements[type]) { saveConfig[type][num] = {"position": {}, "size": {}}; }
                     }
@@ -484,6 +537,12 @@ function initializeDashboard() {
                                         break;
 
                                     case("consoleWidgets"):
+                                        saveConfig[widgetType][widgetNum]["size"] = {
+                                            "height": positionBox.height,
+                                            "width": positionBox.width
+                                        }
+                                        break;
+                                    case("graphWidgets"):
                                         saveConfig[widgetType][widgetNum]["size"] = {
                                             "height": positionBox.height,
                                             "width": positionBox.width
@@ -560,15 +619,24 @@ function initializeDashboard() {
                 widgetElements[type][num]["textarea"].style.height = (parseFloat(widgetElements[type][num]["widget"].style.height.replace("px", ""))-84.7+"px");
                 widgetElements[type][num]["textarea"].style.width = (parseFloat(widgetElements[type][num]["widget"].style.width.replace("px", ""))-22+"px");
                 break;
+            
+            case("graphWidgets"):
+                widgetElements[type][num]["widget"].style.height = heightHolder+"px";
+                widgetElements[type][num]["widget"].style.width = widthHolder+"px";
+                widgetElements[type][num]["container"].style.height = (parseFloat(widgetElements[type][num]["widget"].style.height.replace("px", ""))-44+"px");
+                widgetElements[type][num]["container"].style.width = (parseFloat(widgetElements[type][num]["widget"].style.width.replace("px", ""))-12+"px");
+                makeWidgetResizable(type, num, "both");
+                stopResizing(type, num);
+                break;
         }
         widgetElements[type][num]["widget"].style.setProperty("left", previousConfigurationSave[type][num]["position"]["x"]);
         widgetElements[type][num]["widget"].style.setProperty("top", previousConfigurationSave[type][num]["position"]["y"]);
     }
 
-    var position = {"gamepadWidgets":{"x":[],"y":[]}, "inputWidgets":{"x":[],"y":[]}, "buttonWidgets":{"x":[],"y":[]}, "displayWidgets":{"x":[],"y":[]}, "consoleWidgets":{"x":[],"y":[]}};
+    var position = {"gamepadWidgets":{"x":[],"y":[]}, "inputWidgets":{"x":[],"y":[]}, "buttonWidgets":{"x":[],"y":[]}, "displayWidgets":{"x":[],"y":[]}, "consoleWidgets":{"x":[],"y":[]}, "graphWidgets":{"x":[], "y":[]}};
     function setupWidgetsAsNew(type, num, stage, storage) {
         if(stage==0) {
-            if(type != "consoleWidgets" && type != "gamepadWidgets") {
+            if(type != "consoleWidgets" && type != "gamepadWidgets" && type != "graphWidgets") {
                 if(type == "buttonWidgets") {
                     let longestLen;
                     widgetElements[type][num]["button"].innerText = dashboardData["vBtns"][num]["Params"][2];
@@ -606,6 +674,12 @@ function initializeDashboard() {
                 widgetElements[type][num]["widget"].style.setProperty("height", parseFloat(widgetElements[type][num]["widget"].style.minHeight)+1+"px");
                 widgetElements[type][num]["textarea"].style.setProperty("width", parseFloat(widgetElements[type][num]["textarea"].style.minWidth)+1+"px");
                 widgetElements[type][num]["textarea"].style.setProperty("height", parseFloat(widgetElements[type][num]["textarea"].style.minHeight)+1+"px");
+                makeWidgetResizable(type, num, "both");
+            } else if(type == "graphWidgets") {
+                widgetElements[type][num]["widget"].style.setProperty("width", parseFloat(widgetElements[type][num]["widget"].style.minWidth)+1+"px"); 
+                widgetElements[type][num]["widget"].style.setProperty("height", parseFloat(widgetElements[type][num]["widget"].style.minHeight)+1+"px");
+                widgetElements[type][num]["container"].style.setProperty("width", parseFloat(widgetElements[type][num]["container"].style.minWidth)+1+"px");
+                widgetElements[type][num]["container"].style.setProperty("height", parseFloat(widgetElements[type][num]["container"].style.minHeight)+5+"px");
                 makeWidgetResizable(type, num, "both");
             }
             $(widgetElements[type][num]["widget"]).draggable("enable");
@@ -706,8 +780,19 @@ function makeWidgetResizable(widgetType, widgetNum, axis) {
             widgetElements[widgetType][widgetNum]["content"].style.setProperty("padding", "17px 0px");
             widgetElements[widgetType][widgetNum]["header"].style.setProperty("padding", "5px 5px");
             break;
+
+        case("graphWidgets"):
+            var grfsWindow = widgetElements[widgetType][widgetNum]["container"];
+            var grfsContent = widgetElements[widgetType][widgetNum]["content"];
+            grfsWindow.style.setProperty("width", parseFloat(grfsWindow.style.width.replace("px", ""))-12+"px");
+            grfsWindow.style.setProperty("height", parseFloat(grfsWindow.style.height.replace("px", ""))-12+"px");
+            grfsContent.style.setProperty("height", (element.getBoundingClientRect().height-44+"px"));
+            // grfsContent.style.setProperty("width", parseFloat(grfsContent.style.width.replace("px", ""))-10+"px");
+            // grfsContent.style.setProperty("height", parseFloat(grfsContent.style.height.replace("px", ""))-5+"px");
+            startDrawingChart(widgetNum);
+            break;
     }
-    for (let i = 0;i < resizers.length; i++) {
+    for(let i = 0;i < resizers.length; i++) {
         const currentResizer = resizers[i];
         currentResizer.addEventListener('mousedown', function(e) {
             e.preventDefault()
@@ -721,65 +806,101 @@ function makeWidgetResizable(widgetType, widgetNum, axis) {
             window.addEventListener('mouseup', stopResize);
         })
         function resize(e) {
-            if (currentResizer.classList.contains('bottom-right')) {
+            if(currentResizer.classList.contains('bottom-right')) {
                 var width = original_width + (e.pageX - original_mouse_x);
                 var height = original_height + (e.pageY - original_mouse_y);
-                if (width > minimum_width && (axis=="x" || axis=="both")) {
+                if(width > minimum_width && (axis=="x" || axis=="both")) {
                     element.style.width = width + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.width = ((width-32)+"px"); }
                     if(widgetType == "inputWidgets") { inpWindow.style.width = ((width-22)+"px"); }
                     if(widgetType == "buttonWidgets") { btnWindow.style.width = ((width-37)+"px"); }  
+                    if(widgetType == "graphWidgets") {
+                        grfsWindow.style.width = ((width-25)+"px");
+                        startDrawingChart(widgetNum);
+                    }
                 }
-                if (height > minimum_height && (axis=="y" || axis=="both")) {
+                if(height > minimum_height && (axis=="y" || axis=="both")) {
                     element.style.height = height + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.height = ((height-84.7)+"px"); }
                     if(widgetType == "gamepadWidgets") { gpWindow.style.height = ((height-44)+"px"); }
+                    if(widgetType == "graphWidgets") { 
+                        grfsContent.style.setProperty('height', ((height-44)+"px"));
+                        grfsWindow.style.setProperty('height', ((height-56)+"px"));  
+                        startDrawingChart(widgetNum);
+                    }
                 }
-            } else if (currentResizer.classList.contains('bottom-left')) {
+            } else if(currentResizer.classList.contains('bottom-left')) {
                 var height = original_height + (e.pageY - original_mouse_y);
                 var width = original_width - (e.pageX - original_mouse_x);
-                if (height > minimum_height && (axis=="y" || axis=="both")) {
+                if(height > minimum_height && (axis=="y" || axis=="both")) {
                     element.style.height = height + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.height = ((height-84.7)+"px"); }
                     if(widgetType == "gamepadWidgets") { gpWindow.style.height = ((height-44)+"px"); }
+                    if(widgetType == "graphWidgets") { 
+                        grfsContent.style.setProperty('height', ((height-44)+"px"));
+                        grfsWindow.style.setProperty('height', ((height-56)+"px")); 
+                        startDrawingChart(widgetNum);
+                    }
                 }
-                if (width > minimum_width && (axis=="x" || axis=="both")) {
+                if(width > minimum_width && (axis=="x" || axis=="both")) {
                     element.style.width = width + 'px';
                     element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.width = ((width-32)+"px"); }
                     if(widgetType == "inputWidgets") { inpWindow.style.width = ((width-22)+"px"); }
                     if(widgetType == "buttonWidgets") { btnWindow.style.width = ((width-37)+"px"); }  
+                    if(widgetType == "graphWidgets") {
+                        grfsWindow.style.width = ((width-25)+"px");
+                        startDrawingChart(widgetNum);
+                    }
                 }
-            } else if (currentResizer.classList.contains('top-right')) {
+            } else if(currentResizer.classList.contains('top-right')) {
                 var width = original_width + (e.pageX - original_mouse_x);
                 var height = original_height - (e.pageY - original_mouse_y);
-                if (width > minimum_width && (axis=="x" || axis=="both")) {
+                if(width > minimum_width && (axis=="x" || axis=="both")) {
                     element.style.width = width + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.width = ((width-32)+"px"); }
                     if(widgetType == "inputWidgets") { inpWindow.style.width = ((width-22)+"px"); }
                     if(widgetType == "buttonWidgets") { btnWindow.style.width = ((width-37)+"px"); }  
+                    if(widgetType == "graphWidgets") {
+                        grfsWindow.style.width = ((width-25)+"px");
+                        startDrawingChart(widgetNum);
+                    }
                 }
-                if (height > minimum_height && (axis=="y" || axis=="both")) {
+                if(height > minimum_height && (axis=="y" || axis=="both")) {
                     element.style.height = height + 'px';
                     element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.height = ((height-84.7)+"px"); }
                     if(widgetType == "gamepadWidgets") { gpWindow.style.height = ((height-44)+"px"); }
+                    if(widgetType == "graphWidgets") { 
+                        grfsContent.style.setProperty('height', ((height-44)+"px"));
+                        grfsWindow.style.setProperty('height', ((height-56)+"px")); 
+                        startDrawingChart(widgetNum);
+                    }
                 }
             } else {
                 var width = original_width - (e.pageX - original_mouse_x);
                 var height = original_height - (e.pageY - original_mouse_y);
-                if (width > minimum_width && (axis=="x" || axis=="both")) {
+                if(width > minimum_width && (axis=="x" || axis=="both")) {
                     element.style.width = width + 'px';
                     element.style.left = original_x + (e.pageX - original_mouse_x) + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.width = ((width-32)+"px"); }
                     if(widgetType == "inputWidgets") { inpWindow.style.width = ((width-22)+"px"); }
                     if(widgetType == "buttonWidgets") { btnWindow.style.width = ((width-37)+"px"); }  
+                    if(widgetType == "graphWidgets") {
+                        grfsWindow.style.width = ((width-25)+"px");
+                        startDrawingChart(widgetNum);
+                    }
                 }
-                if (height > minimum_height && (axis=="y" || axis=="both")) {
+                if(height > minimum_height && (axis=="y" || axis=="both")) {
                     element.style.height = height + 'px';
                     element.style.top = original_y + (e.pageY - original_mouse_y) + 'px';
                     if(widgetType == "consoleWidgets") { consWindow.style.height = ((height-84.7)+"px"); }
                     if(widgetType == "gamepadWidgets") { gpWindow.style.height = ((height-44)+"px"); }
+                    if(widgetType == "graphWidgets") { 
+                        grfsContent.style.setProperty('height', ((height-44)+"px"));
+                        grfsWindow.style.setProperty('height', ((height-56)+"px")); 
+                        startDrawingChart(widgetNum);
+                    }
                 }
             }
         }
@@ -826,6 +947,15 @@ function stopResizing(widgetType, widgetNum) {
             consWindowSpace.style.setProperty("height", "");
             consWindowSpace.style.setProperty("width", "");
             break;
+
+        case("graphWidgets"):
+            let grfsWindow = widgetElements[widgetType][widgetNum]["container"];
+            var grfsContent = widgetElements[widgetType][widgetNum]["content"];
+            grfsContent.style.height = "";
+            grfsWindow.style.setProperty("width", parseFloat(grfsWindow.style.width.replace("px", ""))+12+"px");
+            grfsWindow.style.setProperty("height", parseFloat(grfsWindow.style.height.replace("px", ""))+12+"px");
+            startDrawingChart(widgetNum);
+            break;
     }
 }
   
@@ -860,17 +990,39 @@ function handleVirtualConsoles() {
     }
 }
 
+//The function that updates the virtual graphs on the dashboard
+function handleVirtualGraphs() {
+    for(let widgetNum in widgetElements["graphWidgets"]) {
+        if(dashboardData["vGrfs"][widgetNum]["x"].length > 0) {
+            for(let i=0; i<dashboardData["vGrfs"][widgetNum]["x"].length; i++) {
+                dashboardData["vGrfs"][widgetNum]["dataArray"].push([
+                    parseFloat(dashboardData["vGrfs"][widgetNum]["x"][i]), 
+                    parseFloat(dashboardData["vGrfs"][widgetNum]["y"][i])
+                    // parseFloat(dashboardData["vGrfs"][widgetNum]["y"][0][i]), 
+                    // parseFloat(dashboardData["vGrfs"][widgetNum]["y"][1][i]), 
+                    // parseFloat(dashboardData["vGrfs"][widgetNum]["y"][2][i]), 
+                    // parseFloat(dashboardData["vGrfs"][widgetNum]["y"][3][i])
+                ]);
+            }
+            dashboardData["vGrfs"][widgetNum]["x"] = []
+            // dashboardData["vGrfs"][widgetNum]["y"] = [[], [], [], []]
+            dashboardData["vGrfs"][widgetNum]["y"] = []
+            startDrawingChart(widgetNum);
+        }
+    }
+}
+
 //This function reads the controler, updates the webpage values, and puts values in json data
 function handleGamepads() {
     let gp = navigator.getGamepads()[0]; //Get gamepad data
     let inputData = "";
-    for (let i = 0; i < gp.buttons.length; i++) {
+    for(let i = 0; i < gp.buttons.length; i++) {
         dashboardData["gp"]["btns"][i] = ((gp.buttons[i].pressed) ? (1) : (0));
         inputData += "Button " + (i + 1) + ": ";
-        if (gp.buttons[i].pressed) { inputData += " pressed"; }
+        if(gp.buttons[i].pressed) { inputData += " pressed"; }
         inputData += "<br/>";
     }
-    for (let i = 0; i < gp.axes.length; i += 2) {
+    for(let i = 0; i < gp.axes.length; i += 2) {
         dashboardData["gp"]["axes"][i] = Math.round(((gp.axes[i]).toFixed(2)) * 100);
         dashboardData["gp"]["axes"][i+1] = Math.round(((gp.axes[i+1]).toFixed(2)) * 100);
         if(settingConfiguration["invertedYAxis"]) { dashboardData["gp"]["axes"][i+1] = -(dashboardData["gp"]["axes"][i+1]); }
@@ -881,19 +1033,32 @@ function handleGamepads() {
 
 //The function that updates the driver dashboard with incoming messages
 function updateDashboard() {
-    for (let widgetNum in widgetElements["displayWidgets"]) { dashboardData["vDisps"][widgetNum]["dispMsg"] = (arguments[0])["vDisps"][widgetNum]; }
-    for (let widgetNum in widgetElements["consoleWidgets"]) {
-        if (typeof(arguments[0])["vCons"][widgetNum] !== "undefined") {
+    for(let widgetNum in widgetElements["displayWidgets"]) { dashboardData["vDisps"][widgetNum]["dispMsg"] = (arguments[0])["vDisps"][widgetNum]; }
+    for(let widgetNum in widgetElements["consoleWidgets"]) {
+        if(typeof(arguments[0])["vCons"][widgetNum] !== "undefined") {
             let lastChar;
-            for(let i=0; i<(arguments[0])["vCons"][widgetNum].length; i++) {
-                let thisChar = (arguments[0])["vCons"][widgetNum][i];
+            for(let i=0; i<arguments[0]["vCons"][widgetNum].length; i++) {
+                let thisChar = arguments[0]["vCons"][widgetNum][i];
                 if((lastChar == "\n") && (thisChar == " ")) { 
-                    (arguments[0])["vCons"][widgetNum] = (arguments[0]["vCons"][widgetNum].slice(0, i)+arguments[0]["vCons"][widgetNum].slice((i+1), arguments[0]["vCons"][widgetNum].length));
+                    arguments[0]["vCons"][widgetNum] = (arguments[0]["vCons"][widgetNum].slice(0, i)+arguments[0]["vCons"][widgetNum].slice((i+1), arguments[0]["vCons"][widgetNum].length));
                     i = (i-1);
                 } else { lastChar = thisChar; }
             }
-            dashboardData["vCons"][widgetNum]["consMsg"] += (arguments[0])["vCons"][widgetNum];
+            dashboardData["vCons"][widgetNum]["consMsg"] += arguments[0]["vCons"][widgetNum];
             widgetElements["consoleWidgets"][widgetNum]["textarea"].scrollTop = widgetElements["consoleWidgets"][widgetNum]["textarea"].scrollHeight;
+        }
+    }
+    for(let widgetNum in widgetElements["graphWidgets"]) {
+        if(arguments[0]["vGrfs"][widgetNum]["x"].length > 0) {
+            // for(let i=0; i<arguments[0]["vGrfs"][widgetNum]["x"].length; i++) {
+            //     arguments[0]["vGrfs"][widgetNum]["x"][i] = parseFloat(arguments[0]["vGrfs"][widgetNum]["x"][i]);
+            //     arguments[0]["vGrfs"][widgetNum]["y"][i] = parseFloat(arguments[0]["vGrfs"][widgetNum]["y"][i]);
+            // }
+            dashboardData["vGrfs"][widgetNum]["x"] = dashboardData["vGrfs"][widgetNum]["x"].concat(arguments[0]["vGrfs"][widgetNum]["x"]);
+            dashboardData["vGrfs"][widgetNum]["y"] = dashboardData["vGrfs"][widgetNum]["y"].concat(arguments[0]["vGrfs"][widgetNum]["y"]);
+            // for(let i=0; i<4; i++) {
+            //     dashboardData["vGrfs"][widgetNum]["y"][i] = dashboardData["vGrfs"][widgetNum]["y"].concat(arguments[0]["vGrfs"][widgetNum]["y"][i]);
+            // }
         }
     }
 }
@@ -919,6 +1084,7 @@ function openWebsocket() {
         window.clearInterval(repVirtualInputs); //Stop updating virtual inputs
         window.clearInterval(repVirtualDisplays); //Stop updating virtual displays
         window.clearInterval(repVirtualConsoles); //Stop updating virtual consoles
+        window.clearInterval(repVirtualGraphs); //Stop updating virtual graphs
         if(typeof(repGP) !== "undefined") {
             window.clearInterval(repGP); //Stop updating gamepad controller
         }
@@ -929,7 +1095,7 @@ function openWebsocket() {
 
     //Function to recive incoming messages
     ws.onmessage = function(event) {
-        if (dashIsInitialized) {
+        if(dashIsInitialized) {
             updateDashboard(JSON.parse(event.data));
         } else {
             initializeDashboard(event.data);

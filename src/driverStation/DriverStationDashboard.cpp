@@ -79,6 +79,15 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
       JsonObject Console = VirtualConsoles.createNestedObject();
       Console["Id"] = dashInstance->getDashConsoles(cons).consName;
     }
+    //Pack json config for virtual graphs
+    JsonArray VirtualGraphs = JSONBufferOut.createNestedArray("vGrfs");
+    for (int grfs = 0; grfs < dashInstance->getGrfCount(); grfs++)
+    {
+      JsonObject Graph = VirtualGraphs.createNestedObject();
+      Graph["Id"] = dashInstance->getDashGraphs(grfs).grfName;
+      Graph["xLbl"] = dashInstance->getDashGraphs(grfs).xName;
+      Graph["yLbl"] = dashInstance->getDashGraphs(grfs).yName;
+    }
     //Package the initial configuration message
     String initDataString;                        //String to hold the constrcted message
     serializeJson(JSONBufferOut, initDataString); //Serailze the json and put it in the created string
@@ -132,15 +141,21 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
         dashInstance->setDashInputs(inp, IncomingJsonBuffer["vInps"][inp]);
       } //Get dash input values
     }
+
     //////////////////////////////////
     ////    Send response data    ////
     DynamicJsonDocument OutgoingJsonBuffer(1000);                               //Dynamicly created json document to hold response
     JsonArray VirtualDisplays = OutgoingJsonBuffer.createNestedArray("vDisps"); //Create json array to hold dash display data
     JsonArray VirtualConsoles = OutgoingJsonBuffer.createNestedArray("vCons");  //Crate json array to hold dash console data
+    JsonArray VirtualGraphs = OutgoingJsonBuffer.createNestedArray("vGrfs");    //Create json array to hold dash graph data
+
+    //Add dash display data
     for(int disp=0; disp < dashInstance->getDispCount(); disp++) 
     {
       VirtualDisplays.add(dashInstance->getDashDisplays(disp).dispData);
-    } //Add dash display data
+    } 
+
+    //Add dash console data
     for (int cons = 0; cons < dashInstance->getConsCount(); cons++)
     { 
       if(dashInstance->getDashIsEnabled()) 
@@ -154,7 +169,7 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
         } 
         else if(buffEnd < buffStart) 
         {
-          msgLength = (buffEnd + (1000-buffStart));
+          msgLength = (buffEnd + (500-buffStart));
         } 
         else 
         { 
@@ -167,7 +182,7 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
           {        
             consoleMsg[i] = dashInstance->getDashConsoles(cons).consBuffer[dashInstance->getDashConsoles(cons).bufferStart];
             int next = dashInstance->getDashConsoles(cons).bufferStart + 1;
-            if(next >= 1000) 
+            if(next >= 500) 
             { 
               next = 0; 
             }
@@ -175,6 +190,42 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
           }
           consoleMsg[msgLength] = '\0';
           VirtualConsoles.add(consoleMsg);
+        }
+      }
+    }
+
+    //Add dash graph data
+    for (int grfs = 0; grfs < dashInstance->getGrfCount(); grfs++)
+    { 
+      if(dashInstance->getDashIsEnabled()) 
+      {
+        JsonObject Graph = VirtualGraphs.createNestedObject();
+        JsonArray xJsonData = Graph.createNestedArray("x");
+        JsonArray yJsonData = Graph.createNestedArray("y");
+        int dataLength = 0;
+        int buffEnd = dashInstance->getDashGraphs(grfs).bufferEnd;
+        int buffStart = dashInstance->getDashGraphs(grfs).bufferStart;
+        if(buffEnd > buffStart) 
+        {
+          dataLength = buffEnd - buffStart;
+        } 
+        else if(buffEnd < buffStart) 
+        {
+          dataLength = (buffEnd + (50-buffStart));
+        } 
+        if(dataLength > 0) 
+        {
+          for(int i=0; i<dataLength; i++) 
+          {        
+            xJsonData.add(dashInstance->getDashGraphs(grfs).grfBufferX[dashInstance->getDashGraphs(grfs).bufferStart]);
+            yJsonData.add(dashInstance->getDashGraphs(grfs).grfBufferY[dashInstance->getDashGraphs(grfs).bufferStart]);
+            int next = dashInstance->getDashGraphs(grfs).bufferStart + 1;
+            if(next >= 50) 
+            { 
+              next = 0; 
+            }
+            dashInstance->setGraphBufferStart(grfs, next);
+          }
         }
       }
     }
@@ -186,17 +237,19 @@ static void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
   ////////////////////////////////////////////////////////////////////////////////////////
 }
 
-DriverStationDashboard::DriverStationDashboard(int btnCount, int inpCount, int dispCount, int consCount,
-                                               DashButton *dashButtons, DashInput *dashInputs, DashDisplay *dashDisplays, DashConsole *dashConsoles)
+DriverStationDashboard::DriverStationDashboard(int btnCount, int inpCount, int dispCount, int consCount, int grfCount,
+                                               DashButton *dashButtons, DashInput *dashInputs, DashDisplay *dashDisplays, DashConsole *dashConsoles, DashGraph *dashGraphs)
 {
   _dashButtons = dashButtons;
   _dashInputs = dashInputs;
   _dashDisplays = dashDisplays;
   _dashConsoles = dashConsoles;
+  _dashGraphs = dashGraphs;
   _btnCount = btnCount;
   _inpCount = inpCount;
   _dispCount = dispCount;
   _consCount = consCount;
+  _grfCount = grfCount;
   dashInstance = this;
 }
 
@@ -232,7 +285,7 @@ void DriverStationDashboard::initialize(char *ssid, char *password)
   }
   else
   {
-    logPL("DNS server started.");
+    logPL("DNS Server Started");
   }
 
   if (!SPIFFS.begin(true)) 
@@ -334,14 +387,14 @@ void DriverStationDashboard::sendToConsole(int consNum, String dataToDisplay)
   for(int i=0; i < msgLength; i++)
   {
     int next = _dashConsoles[consNum].bufferEnd + 1;
-    if(next >= 1000) 
+    if(next >= 500) 
     {
        next = 0;
     }
     if(next == _dashConsoles[consNum].bufferStart) 
     {
       logPL("ERROR: Console "+String(consNum)+" buffer overflow detected in sendToConsole function at buffer index "+String(_dashConsoles[consNum].bufferEnd)+":\n"); 
-      for(int ind=0; ind<1000; ind++)
+      for(int ind=0; ind<500; ind++)
       {
         if(_dashConsoles[consNum].consBuffer[ind] != '\n')
         {
@@ -359,7 +412,7 @@ void DriverStationDashboard::sendToConsole(int consNum, String dataToDisplay)
       _dashConsoles[consNum].bufferEnd = next;
     }
   }
-  for(int i=0; i<1000; i++) 
+  for(int i=0; i<500; i++) 
   {
     if(_dashConsoles[consNum].consBuffer[i] == '\0' && ((i <= _dashConsoles[consNum].bufferEnd) && (i >= _dashConsoles[consNum].bufferStart))) 
     { 
@@ -384,6 +437,28 @@ void DriverStationDashboard::sendToConsole(int consNum, int dataToDisplay)
   sendToConsole(consNum, dataArray);
 }
 
+//Send data to a dash board graph
+void DriverStationDashboard::sendToGraph(int grfNum, double xVal, double yVal) // int lineNum 
+{
+  int next = _dashGraphs[grfNum].bufferEnd + 1;
+  if(next >= 50) 
+  {
+      next = 0;
+  }
+  if(next == _dashConsoles[grfNum].bufferStart) 
+  {
+    logPL("ERROR: Graph "+String(grfNum)+" buffer overflow detected in sendToGraph function at buffer index "+String(_dashGraphs[grfNum].bufferEnd)+":\n"); 
+    _dashConsoles[grfNum].bufferStart++;
+  } 
+  else 
+  {
+    _dashGraphs[grfNum].grfBufferX[_dashGraphs[grfNum].bufferEnd] = xVal;
+    _dashGraphs[grfNum].grfBufferY[_dashGraphs[grfNum].bufferEnd] = yVal;
+    _dashGraphs[grfNum].bufferEnd = next;
+  }
+}
+
+
 //Fucntion for ws class to access instance button count
 int DriverStationDashboard::getBtnCount(void) { return _btnCount; }
 
@@ -395,6 +470,9 @@ int DriverStationDashboard::getDispCount(void) { return _dispCount; }
 
 //Function for ws class to access instance console count
 int DriverStationDashboard::getConsCount(void) { return _consCount; }
+
+//Function for ws class to access instance graph count
+int DriverStationDashboard::getGrfCount(void) { return _grfCount; }
 
 //Function for ws class to modify instance enabled state
 void DriverStationDashboard::setDashIsEnabled(bool dashState) { _dashIsEnabled = dashState; }
@@ -414,6 +492,9 @@ DashDisplay DriverStationDashboard::getDashDisplays(int dispNum) { return _dashD
 //Function for ws class to access instance dash consoles
 DashConsole DriverStationDashboard::getDashConsoles(int consNum) { return _dashConsoles[consNum]; }
 
+//Function for ws class to access instance dash graphs
+DashGraph DriverStationDashboard::getDashGraphs(int grfNum) { return _dashGraphs[grfNum]; }
+
 //Function for ws class to modify instance dash buttons
 void DriverStationDashboard::setDashButtons(int btnNum, bool btnState) { _dashButtons[btnNum].currentState = btnState; }
 
@@ -428,3 +509,6 @@ void DriverStationDashboard::setDashGamePadAxes(int axesNum, int axesState) { _d
 
 //Fucntion for ws class to modify instance console buffer start position
 void DriverStationDashboard::setConsoleBufferStart(int consNum, int startIndex) { _dashConsoles[consNum].bufferStart = startIndex; }
+
+//Function for ws class to modify instance graph buffer start position
+void DriverStationDashboard::setGraphBufferStart(int grfNum, int startIndex) { _dashGraphs[grfNum].bufferStart = startIndex; }
